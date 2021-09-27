@@ -437,6 +437,16 @@ def display_results(
     """ """
     df = pd.DataFrame(((d) for n,d in full_graph.nodes(data=True)))
     df['cluster'] = [part_graph.nodes[n]['cluster'] for n in full_graph.nodes()]
+
+    # It can happen that removal completely removed one partition.
+    # In this case, we need to report back an error
+    if len(df['cluster'].unique()) < nr_of_parts:
+        error_string = f'''
+        Impossible to generate the desired {nr_of_parts} partitions at the current partitioning threshold.
+        Removal of sequences to achieve separation results in loss of {nr_of_parts-len(df['cluster'].unique())} complete partitions.
+        '''
+        raise RuntimeError(error_string)
+
     df['AC'] = [n for n in full_graph.nodes()]
     result = df.groupby(['cluster','label-val'])['AC'].count().reset_index().pivot_table(values='AC',columns=['label-val'],index=['cluster']).T
     df.set_index('AC', inplace=True)
@@ -644,6 +654,7 @@ def main():
         remover(full_graph, part_graph, threshold, allow_moving, False, removal_type)    
 
     print('After removal we have this many samples:', full_graph.number_of_nodes())
+
 
     df, _ = display_results(part_graph, full_graph, labels, nr_of_parts)
 
