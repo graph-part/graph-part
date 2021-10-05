@@ -72,6 +72,10 @@ The following parameters are optional, the non default values are experimental:
      ('-ggs', '--ggsearch-path'):     Path to the ggsearch36 executable used to compute
                                       sequence identities. If none is provided, it defaults
                                       to the relative path `fasta-36.3.8h/bin/ggsearch36`.
+     ('-pl', '--parallel'):           1 chunks the input file and runs ggsearch36 in multiple 
+                                      threads to speed up processing. 0 only runs a single 
+                                      process. 0 is the default.
+                                      
 
 Example usage:
 python graph_part.py 
@@ -537,6 +541,7 @@ def main():
     mode = 0
     metric_column = 3
     ggsearch_path = 'fasta-36.3.8h/bin/ggsearch36'
+    parallel = False
 
     if len(sys.argv) > 1:
         args = (x for x in sys.argv[1:])
@@ -570,7 +575,9 @@ def main():
                 removal_type = next(args, None)
             elif arg in ('-ggs', '-ggsearch-path'):
                 ggsearch_path = next(args, None)
-            
+            elif arg in ('-pl', '-parallel'):
+                parallel = next(args, None)
+
             if len(parts) == 2:
                 if parts[0] in ('-mf', '--meta-file'):
                     entity_fp = parts[1]
@@ -594,7 +601,13 @@ def main():
                     allow_moving = parts[1]
                 elif parts[0] in ('-rt', '--removal-type'):
                     removal_type = parts[1]
-    
+                elif arg in ('-ggs', '-ggsearch-path'):
+                    ggsearch_path = parts[1]
+                elif arg in ('-pl', '-parallel'):
+                    parallel = parts[1]
+
+
+
     ## Validate Meta file path
     if type(entity_fp) != str:
         raise TypeError("Meta file path (-mf/--meta-file) not provided, improper or nonexistent.") 
@@ -656,6 +669,13 @@ def main():
     except ValueError or TypeError:
         raise TypeError("Failed to interpret the entered edge file metric column (-mc/--metric-column) %r. Please enter an integer value representing the 1-based, left-to-right, column index for the desired metric in the supplied edge list file." % (nr_of_parts))
 
+    ## Validate allow moving 
+    try:
+        parallel = int(parallel) == 1
+    except ValueError or TypeError:
+        raise TypeError("Failed to interpret parallel  (-pl/--parallel) %r. Please enter 0 to dissallow multithreading otherwise don't specify or enter 1" % (parallel))
+
+
     ## End of parameter validation
 
     ## Processing starts here:
@@ -670,9 +690,12 @@ def main():
     ## Let's see the initial label distribution
     print(pd.DataFrame(labels).T)
 
-    ## Load the edges
-    #load_edges(edge_fp, full_graph, part_graph, transformation, threshold, metric_column)
-    generate_edges(entity_fp,full_graph, part_graph, transformation, threshold, ggsearch_path)
+    ## Get the edges
+    if parallel:
+        from ggsearch_parallel import generate_edges_mp
+        generate_edges_mp(entity_fp, full_graph, part_graph,transformation, threshold, ggsearch_path, n_chunks=50, n_procs=6)
+    else:
+        generate_edges(entity_fp,full_graph, part_graph, transformation, threshold, ggsearch_path)
 
     ## Let's look at the number of edges
     print("Full graph nr. of edges:", full_graph.number_of_edges())
