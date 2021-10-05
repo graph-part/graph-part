@@ -1,3 +1,8 @@
+'''
+This file contains functions that call ggsearch36 on a provided
+.fasta file and insert the computed pairwise sequence identities
+as edges into a provided networkx graph.
+'''
 import multiprocessing
 import networkx as nx
 from os import path, remove
@@ -18,8 +23,7 @@ TRANSFORMATIONS = {
     None: lambda x: x
 }
 
-
-def parse_fasta(fastafile: str) -> Tuple[str,str]:
+def parse_fasta(fastafile: str) -> Tuple[List[str],List[str]]:
 	'''
     Parses fasta file into lists of identifiers and sequences.
 	Can handle multi-line sequences and empty lines.
@@ -38,12 +42,68 @@ def parse_fasta(fastafile: str) -> Tuple[str,str]:
 	return ids, seqs
 
 
-def chunk_fasta_file(entity_fp: str, n_chunks) ->None:
+
+def generate_edges(entity_fp: str, 
+                  full_graph: nx.classes.graph.Graph, 
+                  tranformation: str,
+                  threshold: float,
+                  ggsearch_path: str,
+                  separator: str = '|',
+                  ) -> None:
+    '''
+    Call ggsearch36 and insert found edges into the graph as they are computed.
+    This is the default implementation that runs one single process for the full
+    dataset without multithreading.
+    '''
+
+    # get length of dataset as e-value for ggsearch36
+    e_value = len(parse_fasta(entity_fp)[0]) +1 
+
+    import subprocess
+    ggs = path.expanduser(ggsearch_path)
+    with subprocess.Popen(
+            [ggs,"-E", e_value ,entity_fp, entity_fp],
+            stdout=subprocess.PIPE,
+            bufsize=1,
+            universal_newlines=True) as proc:
+        #with open(output_file,'w+') as outf:
+        for line_nr, line in enumerate(proc.stdout):
+            if '>>>' in line:
+                qry_nr = int(line[2])
+                this_qry = line[6:70].split()[0].split(separator)[0]
+
+            elif line[0:2] == '>>':
+                this_lib = line[2:66].split()[0].split(separator)[0]
+
+            elif line[:13] == 'global/global':
+                identity = float(line.split()[4][:-1])/100
+
+                try:
+                    metric = TRANSFORMATIONS[tranformation](identity)
+                except ValueError or TypeError:
+                    raise TypeError("Failed to interpret the metric column value %r. Please ensure that the edge list file is correctly formatted and that the correct column is specified." % (identity))
+                
+                if this_qry == this_lib:
+                    continue
+                if metric > threshold:
+                    continue
+                # NOTE this case should raise an error - graph was constructed from same file before, and so all the nodes should be there.
+                if not full_graph.has_node(this_qry) or not full_graph.has_node(this_lib):
+                    raise RuntimeError(f'Tried to insert edge {this_qry}-{this_lib} into the graph, but did not find nodes. This should not happen, please report a bug.')
+                if full_graph.has_edge(this_qry, this_lib):
+                    if full_graph[this_qry][this_lib]['metric'] > metric:
+                        nx.set_edge_attributes(full_graph,{(this_qry,this_lib):metric}, 'metric')
+                else:
+                    full_graph.add_edge(this_qry, this_lib, metric=metric)  
+
+
+
+
+def chunk_fasta_file(ids: List[str], seqs: List[str], n_chunks: int) -> None:
     '''
     Break up fasta file into multiple smaller files that can be
     used for multiprocessing.
     '''
-    ids, seqs = parse_fasta(entity_fp)
 
     chunk_size = math.ceil(len(ids)/n_chunks)
 
@@ -62,8 +122,10 @@ def compute_edges(query_fp: str,
                   full_graph: nx.classes.graph.Graph, 
                   transformation: str,
                   threshold: float,
+                  e_value: float,
                   ggsearch_path: str,
-                  ):
+                  separator: str = '|',
+                  ) -> None:
     '''
     Run ggsearch36 on query_fp and library_fp,
     Retrieve pairwise similiarities, transform and
@@ -72,17 +134,17 @@ def compute_edges(query_fp: str,
     import subprocess
     ggs = path.expanduser(ggsearch_path)
     with subprocess.Popen(
-            [ggs,"-E","41762",query_fp,library_fp],
+            [ggs,"-E", e_value, query_fp, library_fp],
             stdout=subprocess.PIPE,
             bufsize=1,
             universal_newlines=True) as proc:
         for line_nr, line in enumerate(proc.stdout):
             if '>>>' in line:
                 qry_nr = int(line[2])
-                this_qry = line[6:70].split()[0].split('|')[0]
+                this_qry = line[6:70].split()[0].split(separator)[0]
 
             elif line[0:2] == '>>':
-                this_lib = line[2:66].split()[0].split('|')[0]
+                this_lib = line[2:66].split()[0].split(separator)[0]
 
             elif line[:13] == 'global/global':
                 identity = float(line.split()[4][:-1])/100
@@ -91,7 +153,7 @@ def compute_edges(query_fp: str,
                 try:
                     metric = TRANSFORMATIONS[transformation](identity)
                 except ValueError or TypeError:
-                    raise TypeError("Failed to interpret the metric column value %r. Please ensure that the edge list file is correctly formatted and that the correct column is specified." % (spl[1]))
+                    raise TypeError("Failed to interpret the identity value %r. Please ensure that the ggsearch36 output is correctly formatted." % (identity))
                 
                 if this_qry == this_lib:
                     continue
@@ -110,7 +172,6 @@ def compute_edges(query_fp: str,
 
 def generate_edges_mp(entity_fp: str, 
                   full_graph: nx.classes.graph.Graph, 
-                  part_graph: nx.classes.graph.Graph,
                   transformation: str,
                   threshold: float,
                   ggsearch_path: str,
@@ -123,7 +184,10 @@ def generate_edges_mp(entity_fp: str,
     '''
 
     # chunk the input
-    chunk_fasta_file(entity_fp, n_chunks)
+    ids, seqs = parse_fasta(entity_fp)
+    e_value = len(ids)+1
+
+    chunk_fasta_file(ids, seqs, n_chunks)
 
 
     # start n_procs threads, each thread starts a subprocess
@@ -135,7 +199,7 @@ def generate_edges_mp(entity_fp: str,
                 # distance is symmetric, so after having 0:1 don't need 1:0
                 q = f'graphpart_{i}.fasta.tmp'
                 l = f'graphpart_{j}.fasta.tmp'
-                future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold, ggsearch_path)
+                future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold, e_value, ggsearch_path)
 
     #delete the chunks
     for i in range(n_chunks):

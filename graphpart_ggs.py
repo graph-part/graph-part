@@ -13,6 +13,8 @@ import time
 from collections import Counter
 from itertools import product
 
+from ggsearch_utils import generate_edges, generate_edges_mp
+
 """
 This program partitions an entity set according to a single pairwise distance metric
 and some desired threshold the partitions should fullfill.
@@ -193,91 +195,6 @@ def load_entities(entity_fp: str, priority_name: str, labels_name: str):
             part_graph.add_node(AC)
 
     return full_graph, part_graph, labels
-
-
-def load_edges(edge_fp: str, 
-               full_graph: nx.classes.graph.Graph, 
-               part_graph: nx.classes.graph.Graph,
-               tranformation: str,
-               threshold: float,
-               metric_column: int):
-    with open(edge_fp) as inf:
-        #pdb.set_trace()
-        for line_nr, line in enumerate(inf):
-            spl = line.strip().split(',')
-            if len(spl) < 3:
-                raise ValueError("""
-                Edge list file does not contain at least three comma 
-                separated columns. The first two columns should contain
-                entity identifiers and the third should contain the
-                metric to partition by.
-                """)
-            
-            this_qry = spl[0]
-            this_lib = spl[1]
-            try:
-                metric = TRANSFORMATIONS[tranformation](float(spl[metric_column]))
-            except ValueError or TypeError:
-                raise TypeError("Failed to interpret the metric column value %r. Please ensure that the edge list file is correctly formatted and that the correct column is specified." % (spl[1]))
-            
-            if this_qry == this_lib:
-                continue
-            if metric > threshold:
-                continue
-            if not full_graph.has_node(this_qry) or not full_graph.has_node(this_lib):
-                continue
-            if full_graph.has_edge(this_qry, this_lib):
-                if full_graph[this_qry][this_lib]['metric'] > metric:
-                    nx.set_edge_attributes(full_graph,{(this_qry,this_lib):metric}, 'metric')
-            else:
-                full_graph.add_edge(this_qry, this_lib, metric=metric)  
-             
-
-def generate_edges(entity_fp: str, 
-                  full_graph: nx.classes.graph.Graph, 
-                  part_graph: nx.classes.graph.Graph,
-                  tranformation: str,
-                  threshold: float,
-                  ggsearch_path: str):
-    '''Call ggsearch36 and inserts found edges into the graph as they are computed.
-    '''
-    import subprocess
-    ggs = path.expanduser(ggsearch_path)
-    with subprocess.Popen(
-            [ggs,"-E","41762",entity_fp,entity_fp],
-            stdout=subprocess.PIPE,
-            bufsize=1,
-            universal_newlines=True) as proc:
-        #with open(output_file,'w+') as outf:
-        for line_nr, line in enumerate(proc.stdout):
-            if '>>>' in line:
-                qry_nr = int(line[2])
-                this_qry = line[6:70].split()[0].split('|')[0]
-
-            elif line[0:2] == '>>':
-                this_lib = line[2:66].split()[0].split('|')[0]
-
-            elif line[:13] == 'global/global':
-                identity = float(line.split()[4][:-1])/100
-                #print(qry_nr, this_qry, this_lib, identity)
-
-                try:
-                    metric = TRANSFORMATIONS[tranformation](identity)
-                except ValueError or TypeError:
-                    raise TypeError("Failed to interpret the metric column value %r. Please ensure that the edge list file is correctly formatted and that the correct column is specified." % (spl[1]))
-                
-                if this_qry == this_lib:
-                    continue
-                if metric > threshold:
-                    continue
-                # NOTE this case should raise an error - graph was constructed from same file before, and so all the nodes should be there.
-                if not full_graph.has_node(this_qry) or not full_graph.has_node(this_lib):
-                    raise RuntimeError(f'Tried to insert edge {this_qry}-{this_lib} into the graph, but did not find nodes. This should not happen, please report a bug.')
-                if full_graph.has_edge(this_qry, this_lib):
-                    if full_graph[this_qry][this_lib]['metric'] > metric:
-                        nx.set_edge_attributes(full_graph,{(this_qry,this_lib):metric}, 'metric')
-                else:
-                    full_graph.add_edge(this_qry, this_lib, metric=metric)  
 
 
 def partition_assignment(cluster_vector, label_vector, n_partitions, n_class):
@@ -542,6 +459,8 @@ def main():
     metric_column = 3
     ggsearch_path = 'fasta-36.3.8h/bin/ggsearch36'
     parallel = False
+    load_checkpoint_path = None
+    save_checkpoint_path = None
 
     if len(sys.argv) > 1:
         args = (x for x in sys.argv[1:])
@@ -690,15 +609,29 @@ def main():
     ## Let's see the initial label distribution
     print(pd.DataFrame(labels).T)
 
+
     ## Get the edges
+    if load_checkpoint_path is not None:
+        # load from previous checkpoint
+        full_graph = pickle.load(full_graph, open(load_checkpoint_path+'.pickle', 'rb'))
+        # filter edges to match defined threshold - need not be the same as when checkpoint was saved.
+        for qry, lib, data in full_graph.edges(data=True):
+            if data['metric'] > threshold:
+                full_graph.remove_edge(qry, lib)
+            
+
+    
     if parallel:
-        from ggsearch_parallel import generate_edges_mp
-        generate_edges_mp(entity_fp, full_graph, part_graph,transformation, threshold, ggsearch_path, n_chunks=50, n_procs=6)
+        generate_edges_mp(entity_fp, full_graph,transformation, threshold, ggsearch_path, n_chunks=50, n_procs=6)
     else:
-        generate_edges(entity_fp,full_graph, part_graph, transformation, threshold, ggsearch_path)
+        generate_edges(entity_fp,full_graph, transformation, threshold, ggsearch_path)
 
     ## Let's look at the number of edges
     print("Full graph nr. of edges:", full_graph.number_of_edges())
+
+    if save_checkpoint_path is not None:
+        import pickle
+        pickle.dump(full_graph, open(save_checkpoint_path+'.pickle', 'wb'))
     
     ## Finally, let's partition this
     partition_data(full_graph, part_graph, labels, threshold, nr_of_parts, mode)
