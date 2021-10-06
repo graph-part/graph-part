@@ -57,8 +57,7 @@ def generate_edges(entity_fp: str,
     '''
 
     # get length of dataset as e-value for ggsearch36
-    e_value = len(parse_fasta(entity_fp)[0]) +1 
-
+    e_value = str(len(parse_fasta(entity_fp)[0]) +1 ) #string conversion required by subprocess API
     import subprocess
     ggs = path.expanduser(ggsearch_path)
     with subprocess.Popen(
@@ -71,9 +70,11 @@ def generate_edges(entity_fp: str,
             if '>>>' in line:
                 qry_nr = int(line[2])
                 this_qry = line[6:70].split()[0].split(separator)[0]
+                this_qry = this_qry.lstrip('>')
 
             elif line[0:2] == '>>':
                 this_lib = line[2:66].split()[0].split(separator)[0]
+                this_lib = this_lib.lstrip('>')
 
             elif line[:13] == 'global/global':
                 identity = float(line.split()[4][:-1])/100
@@ -99,15 +100,22 @@ def generate_edges(entity_fp: str,
 
 
 
-def chunk_fasta_file(ids: List[str], seqs: List[str], n_chunks: int) -> None:
+def chunk_fasta_file(ids: List[str], seqs: List[str], n_chunks: int) -> int:
     '''
     Break up fasta file into multiple smaller files that can be
     used for multiprocessing.
+    Returns the number of generated chunks.
     '''
 
     chunk_size = math.ceil(len(ids)/n_chunks)
 
+    empty_chunks = 0
     for i in range(n_chunks):
+        # because of ceil() we sometimes make less partitions than specified.
+        if i*chunk_size>len(ids):
+            empty_chunks +=1
+            continue
+
         chunk_ids = ids[i*chunk_size:(i+1)*chunk_size]
         chunk_seqs = seqs[i*chunk_size:(i+1)*chunk_size]
 
@@ -115,6 +123,8 @@ def chunk_fasta_file(ids: List[str], seqs: List[str], n_chunks: int) -> None:
             for id, seq in zip(chunk_ids, chunk_seqs):
                 f.write(id+'\n')
                 f.write(seq+'\n')
+
+    return n_chunks - empty_chunks
 
 
 def compute_edges(query_fp: str,
@@ -185,10 +195,9 @@ def generate_edges_mp(entity_fp: str,
 
     # chunk the input
     ids, seqs = parse_fasta(entity_fp)
-    e_value = len(ids)+1
+    e_value = str(len(ids)+1)
 
-    chunk_fasta_file(ids, seqs, n_chunks)
-
+    n_chunks = chunk_fasta_file(ids, seqs, n_chunks) #get the actual number of generated chunks.
 
     # start n_procs threads, each thread starts a subprocess
     # Because of threading's GIL we can write edges directly to the full_graph object.

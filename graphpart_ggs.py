@@ -494,7 +494,7 @@ def main():
                 removal_type = next(args, None)
             elif arg in ('-ggs', '-ggsearch-path'):
                 ggsearch_path = next(args, None)
-            elif arg in ('-pl', '-parallel'):
+            elif arg in ('-pl', '--parallel'):
                 parallel = next(args, None)
 
             if len(parts) == 2:
@@ -522,7 +522,7 @@ def main():
                     removal_type = parts[1]
                 elif arg in ('-ggs', '-ggsearch-path'):
                     ggsearch_path = parts[1]
-                elif arg in ('-pl', '-parallel'):
+                elif arg in ('-pl', '--parallel'):
                     parallel = parts[1]
 
 
@@ -620,9 +620,8 @@ def main():
                 full_graph.remove_edge(qry, lib)
             
 
-    
     if parallel:
-        generate_edges_mp(entity_fp, full_graph,transformation, threshold, ggsearch_path, n_chunks=50, n_procs=6)
+        generate_edges_mp(entity_fp, full_graph,transformation, threshold, ggsearch_path, n_chunks=100, n_procs=None)
     else:
         generate_edges(entity_fp,full_graph, transformation, threshold, ggsearch_path)
 
