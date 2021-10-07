@@ -1,3 +1,7 @@
 __version__ ="1.0"
 
-#TODO expose main entry points here
+
+from .graph_part import main
+
+def run_graph_part():
+    main()

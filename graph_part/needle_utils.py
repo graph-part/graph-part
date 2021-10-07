@@ -12,7 +12,7 @@ from itertools import groupby
 from typing import Dict, List, Tuple, Iterator
 import concurrent.futures
 
-from transformations import TRANSFORMATIONS
+from .transformations import TRANSFORMATIONS
 
 def parse_fasta(fastafile: str, sep='|') -> Tuple[List[str],List[str]]:
 	'''
@@ -98,14 +98,8 @@ def generate_edges(entity_fp: str,
                 this_lib = line[5:].split()[0].split('|')[0]
 
             elif line.startswith('# Identity:'):
-                #print(line)
-                #print(line.split('(')[1][:-3])
-                #'100.0%)\n'
-                # Identity:      14/443 ( 3.2%)
 
-                identity = float(line.split('(')[1][:-3])/100
-
-                #identity = float(line.split()[4][:-1])/100
+                identity = float(line.split('(')[1][:-3])/100  # Identity:      14/443 ( 3.2%)
 
                 try:
                     metric = TRANSFORMATIONS[tranformation](identity)
@@ -123,9 +117,8 @@ def generate_edges(entity_fp: str,
                     if full_graph[this_qry][this_lib]['metric'] > metric:
                         nx.set_edge_attributes(full_graph,{(this_qry,this_lib):metric}, 'metric')
                         
-                        nx.set_edge_attributes(full_graph,{(this_qry,this_lib):line}, 'line') #DEBUG
                 else:
-                    full_graph.add_edge(this_qry, this_lib, metric=metric, line=line)  #line DEBUG
+                    full_graph.add_edge(this_qry, this_lib, metric=metric)
 
     remove('graphpart_0.fasta.tmp')
 
@@ -164,7 +157,6 @@ def compute_edges(query_fp: str,
             elif line.startswith('# Identity:'):
                 identity = float(line.split('(')[1][:-3])/100
                 
-
                 try:
                     metric = TRANSFORMATIONS[transformation](identity)
                 except ValueError or TypeError:
@@ -175,13 +167,13 @@ def compute_edges(query_fp: str,
                 if metric > threshold:
                     continue
 
-                metric = line
                 # NOTE this case should raise an error - graph was constructed from same file before, and so all the nodes should be there.
                 if not full_graph.has_node(this_qry) or not full_graph.has_node(this_lib):
                     raise RuntimeError(f'Tried to insert edge {this_qry}-{this_lib} into the graph, but did not find nodes. This should not happen, please report a bug.')
                 if full_graph.has_edge(this_qry, this_lib):
                     if full_graph[this_qry][this_lib]['metric'] > metric:
                         nx.set_edge_attributes(full_graph,{(this_qry,this_lib):metric}, 'metric')
+
                 else:
                     full_graph.add_edge(this_qry, this_lib, metric=metric)  
 
@@ -211,17 +203,18 @@ def generate_edges_mp(entity_fp: str,
     jobs = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_procs) as executor:
         for i in range(n_chunks):
-            for j in range(i, n_chunks):
-                # need to call each chunk with a) itself and b) all others.
-                # distance is symmetric, so after having 0:1 don't need 1:0
+            for j in range(n_chunks):
                 q = f'graphpart_{i}.fasta.tmp'
                 l = f'graphpart_{j}.fasta.tmp'
                 future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold, e_value, ggsearch_path)
                 jobs.append(future)
 
+        # This should force the script to throw exceptions that occured in the threads
+        # We otherwise never retrieve a future's value, so it might go unnoticed.
         for job in jobs:
-            if not job.result():
-                raise RuntimeError(job)
+            if job.exception() is not None:
+                print(job.exception())
+                raise RuntimeError('One of the alignment threads did not complete sucessfully.')
 
     #delete the chunks
     for i in range(n_chunks):

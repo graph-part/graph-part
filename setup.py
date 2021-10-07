@@ -25,5 +25,5 @@ setup(
     packages=['graph_part'],
     python_requires=">=3.6, <4",
     install_requires=requirements,
-    entry_points = {"console_scripts":['signalp6=signalp:predict']},
+    entry_points = {"console_scripts":['graphpart=graph_part:run_graph_part']},
 )

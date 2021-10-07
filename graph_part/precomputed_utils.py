@@ -2,7 +2,7 @@
 Parsing functions for precomputed similarities.
 '''
 import networkx as nx
-from transformations import TRANSFORMATIONS
+from .transformations import TRANSFORMATIONS
 
 
 def load_edge_list(edge_fp: str, 

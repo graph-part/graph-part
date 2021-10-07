@@ -13,10 +13,10 @@ import time
 from collections import Counter
 from itertools import product
 
-from needle_utils import generate_edges, generate_edges_mp
-from precomputed_utils import load_edge_list
-from transformations import TRANSFORMATIONS
-from cli import get_args
+from .needle_utils import generate_edges, generate_edges_mp
+from .precomputed_utils import load_edge_list
+from .transformations import TRANSFORMATIONS
+from .cli import get_args
 
 #TODO update new arg names here
 """

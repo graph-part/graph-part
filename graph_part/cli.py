@@ -2,7 +2,7 @@
 Command line interface for Graph-Part.
 '''
 import argparse
-from transformations import TRANSFORMATIONS
+from .transformations import TRANSFORMATIONS
 
 #TODO check all help strings and update if needed
 #TODO when moving to this, rename some vars in graphpart.py and apply transformations
@@ -20,7 +20,8 @@ def get_args() -> argparse.Namespace:
                                                             supplementary information such as labelling.
                                                             Currently the interleaved fasta file format, 
                                                             with | or : header separators are supported.
-                                                            The - header separator is untested. '''
+                                                            The - header separator is untested. ''',
+                        required=True,
                         )
     parser.add_argument("-ef","--edge-file",type=str, help='''Path to a comma separated file containing 
                                                             pairwise metrics, the first two columns should 
@@ -35,7 +36,8 @@ def get_args() -> argparse.Namespace:
                         default=3,
                         )
     parser.add_argument("-th","--threshold",type=float, help='''The desired threshold, should be within the
-                                                              bounds defined by the metric'''
+                                                              bounds defined by the metric''',
+                        required=True,
                         )
     parser.add_argument("-pa","--partitions",type=int, help='Number of partitions to generate.', 
                         default=5,
