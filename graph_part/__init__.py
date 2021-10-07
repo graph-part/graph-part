@@ -7,4 +7,4 @@ def run_graph_part():
     s = time.perf_counter()
     main()
     elapsed = time.perf_counter() - s
-    print(f"{__file__} executed in {elapsed:0.2f} seconds.")
+    print(f"Graph-Part executed in {elapsed:0.2f} seconds.")

@@ -1,6 +1,6 @@
 '''
-This script invokes ggsearch36 to compute pairwise identities between all sequences and parses the outputs. 
-Generates and edge list with pairwise % identitiy.
+This script calls ggsearch36 to compute pairwise identities between all sequences and parses the outputs. 
+Generates and edge list with pairwise % identity.
 '''
 
 import subprocess
@@ -14,10 +14,10 @@ import argparse
 # fasta_file_lib = 'signalp_6_seqs_only_graphpartheaders.fasta'#'/work3/felteu/edgelist_splitted/signalp6_seqonly_for_graphpart.fasta'
 # ggs = path.expanduser('/work3/felteu/fasta36/bin/ggsearch36')
 
-def run_ggsearch(fasta_file, ggsearch_path, output_file):
+def run_ggsearch(fasta_file, ggsearch_path, output_file, ref_file):
     ggs = path.expanduser(ggsearch_path)
     with subprocess.Popen(
-            [ggs,"-E","41762",fasta_file,fasta_file],
+            [ggs,"-E","41762",fasta_file,ref_file],
             stdout=subprocess.PIPE,
             bufsize=1,
             universal_newlines=True) as proc:
@@ -44,9 +44,10 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--sequences', type=str, help='.fasta file of sequences to be compared.')
+    parser.add_argument('--sequences_2', type=str, help='.fasta file of sequences to be compared.')
     parser.add_argument('--outfile', type=str, help='path of output file to be created.')
     parser.add_argument('--ggs', type=str, help='Path to ggsearch36 executable.')
 
     args = parser.parse_args()
 
-    run_ggsearch(args.sequences, args.ggs, args.outfile)
+    run_ggsearch(args.sequences, args.ggs, args.outfile, args.sequences_2)

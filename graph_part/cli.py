@@ -5,8 +5,6 @@ import argparse
 from .transformations import TRANSFORMATIONS
 
 #TODO check all help strings and update if needed
-#TODO when moving to this, rename some vars in graphpart.py and apply transformations
-
 def get_args() -> argparse.Namespace:
     '''
     Create an ArgumentParser to process all command line arguments of Graph-Part.
@@ -81,8 +79,8 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("-nt","--threads",type=int, help='Number of threads to run in parallel.', default=1)
     parser.add_argument("-nc","--chunks",type=int, help='Number of chunks to split the fasta file.', default=10)
 
-    parser.add_argument('--load-checkpoint-path', default=None)
-    parser.add_argument('--save-checkpoint-path', default=None)
+    parser.add_argument('--load-checkpoint-path', type=str, default=None, help='Path to save the generated graph.')
+    parser.add_argument('--save-checkpoint-path', type=str, default=None, help='Path to a previously generated graph for quickstart.')
 
     args =  parser.parse_args()
 
@@ -111,5 +109,4 @@ def get_args() -> argparse.Namespace:
     
     return args
 
-args = get_args()
 

@@ -203,7 +203,7 @@ def generate_edges_mp(entity_fp: str,
     # Because of threading's GIL we can write edges directly to the full_graph object.
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_procs) as executor:
         for i in range(n_chunks):
-            for j in range(i,n_chunks):
+            for j in range(n_chunks):
                 # need to call each chunk with a) itself and b) all others.
                 # distance is symmetric, so after having 0:1 don't need 1:0
                 q = f'graphpart_{i}.fasta.tmp'

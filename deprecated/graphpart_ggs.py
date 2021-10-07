@@ -13,7 +13,7 @@ import time
 from collections import Counter
 from itertools import product
 
-from ggsearch_utils import generate_edges, generate_edges_mp
+from needle_utils import generate_edges, generate_edges_mp
 
 """
 This program partitions an entity set according to a single pairwise distance metric
@@ -460,7 +460,7 @@ def main():
     ggsearch_path = 'fasta-36.3.8h/bin/ggsearch36'
     parallel = False
     load_checkpoint_path = None
-    save_checkpoint_path = None
+    save_checkpoint_path = 'single_needle_graph'
 
     if len(sys.argv) > 1:
         args = (x for x in sys.argv[1:])
@@ -621,7 +621,7 @@ def main():
             
 
     if parallel:
-        generate_edges_mp(entity_fp, full_graph,transformation, threshold, ggsearch_path, n_chunks=100, n_procs=None)
+        generate_edges_mp(entity_fp, full_graph,transformation, threshold, ggsearch_path, n_chunks=10, n_procs=None)
     else:
         generate_edges(entity_fp,full_graph, transformation, threshold, ggsearch_path)
 
