@@ -411,12 +411,13 @@ def main():
 
     ## Get the edges
     if args.load_checkpoint_path is not None:
+        print('Loading edge weights from previously saved graph.')
         # load from previous checkpoint
-        full_graph = pickle.load(full_graph, open(args.load_checkpoint_path+'.pickle', 'rb'))
+        checkpoint_graph = pickle.load(full_graph, open(args.load_checkpoint_path+'.pickle', 'rb'))
         # filter edges to match defined threshold - need not be the same as when checkpoint was saved.
-        for qry, lib, data in full_graph.edges(data=True):
+        for qry, lib, data in checkpoint_graph.edges(data=True):
             if data['metric'] > threshold:
-                full_graph.remove_edge(qry, lib)
+                full_graph.add_edge(qry, lib, metric=data['metric'])
             
     elif args.edge_file is not None:
         load_edge_list(args.edge_file, full_graph, args.transformation, threshold, args.metric_column)

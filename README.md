@@ -30,20 +30,19 @@ WIP
 - Write tool to make fasta from assignments (concatenate assignment to header, seperator of choice)
 - Write tool to make fasta from .csv (specifify spearator, label_col (multiple?) and priority_col)
 - Fix alignment of header in removal output - this seems to happen with large Connectivity values:  
-- Figure out how to compute sequence identity (Can get perfect match count from output, normalize ourselves? Default is full alignment length)
-- Figure out needleall parameters (default BLOSUM50, penalties different from ggsearch36)
-- Make nicer code for loading checkpointed graph, insert edges into graph from --fasta-file instead of just loading graph. So can only handle changing labels after precomputation of edges.
-
 ```
 Min-threshold    #Entities       #Edges          Connectivity    #Problematics   #Relocated      #To-be-removed  
 0.01             3539            411624                  460915                  3517            1856            1  
 ```
+- Figure out how to compute sequence identity (Can get perfect match count from output, normalize ourselves? Default is full alignment length)
+- Figure out needleall parameters (default BLOSUM50, penalties different from ggsearch36)
+- Expose needleall parameters to CLI?
 
 ## API
 
 Long                    | Short | Description
 ------------------------|-------|------------
-`--fasta-file`          |`-ff`  | Path to the input fasta file, formatted according to [the input format](#Input_format).
+`--fasta-file`          |`-ff`  | Path to the input fasta file, formatted according to [the input format](#Input-format).
 `--out-file`            |`-of`  | Path at which to save the partition assignments as `.csv`
 `--threshold`           |`-th`  | The desired partitioning threshold, should be within the bounds defined by the metric.
 `--partitions`          |`-pa`  | Number of partitions to generate.
@@ -61,9 +60,8 @@ Long                    | Short | Description
 **Flags** 
 Long                    | Short | Description
 ------------------------|-------|------------
-`--no-moving`           |`-nm`  |
-`--remove-same`         |`-rs`  |
-
+`--no-moving`           |`-nm`  | By default, the removing procedure tries to relocate sequences to another partition if it finds more within-threshold neighbours in any. This flag disallows moving.
+`--remove-same`         |`-rs`  | This here is the inverse of removal_type (has default True), not sure what it does TODO
 
 ## FAQ
 WIP
