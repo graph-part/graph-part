@@ -1,14 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import sys
-from datetime import datetime
-from os import listdir, path
 import pandas as pd 
 import numpy as np
 import networkx as nx
-from typing import Dict, List, Tuple, Iterator
-from os.path import join as path_join
-from os.path import isfile, isdir
+from typing import Dict, List, Tuple
 import time
 from collections import Counter
 from itertools import product
@@ -40,9 +35,9 @@ In this case you would specify the priority name -pn experimental and the label 
 For the full list of parameters, run graph_part.py --help
 Example usage:
 python graph_part.py 
-    -mf ../../data/sequences/raw_data.fasta 
+    -ff ../../data/sequences/raw_data.fasta 
     -ef ../../data/edgefiles/ggs_default_gpia2_edges 
-    -mc 3 
+    -mc 2
     -th 0.31 
     -pa 5 
     -tf one-minus 
@@ -426,9 +421,9 @@ def main():
     elif args.edge_file is not None:
         load_edge_list(args.edge_file, full_graph, args.transformation, threshold, args.metric_column)
     elif args.threads>1:
-        generate_edges_mp(args.fasta_file, full_graph,args.transformation, threshold, args.ggsearch_path, n_chunks=10, n_procs=args.threads)
+        generate_edges_mp(args.fasta_file, full_graph,args.transformation, threshold, n_chunks=args.chunks, n_procs=args.threads)
     else:
-        generate_edges(args.fasta_file,full_graph, args.transformation, threshold, args.ggsearch_path)
+        generate_edges(args.fasta_file,full_graph, args.transformation, threshold)
 
     ## Let's look at the number of edges
     print("Full graph nr. of edges:", full_graph.number_of_edges())

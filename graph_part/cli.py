@@ -29,10 +29,10 @@ def get_args() -> argparse.Namespace:
                                                             --meta-file.''',
                         default=None,
                         )
-    parser.add_argument("-mc","--metric-column",type=int, help='''The 1-indexed or one-based indexing number,
+    parser.add_argument("-mc","--metric-column",type=int, help='''The 0-indexed or zero-based indexing number,
                                                             from left-to-right, specifying which column
                                                             in --edge-file contains the desired metric.
-                                                            Left unspecified this is assumed to be 3.''', 
+                                                            Left unspecified this is assumed to be 2.''', 
                         default=3,
                         )
     parser.add_argument("-th","--threshold",type=float, help='''The desired threshold, should be within the
@@ -62,9 +62,6 @@ def get_args() -> argparse.Namespace:
                         )
     
     
-    parser.add_argument("-ggs","--ggsearch-path",type=str, help='Path to the ggsearch36 executable used to compute sequence identities.', 
-                        default='fasta-36.3.8h/bin/ggsearch36',
-                        )
     
 
 
@@ -82,6 +79,7 @@ def get_args() -> argparse.Namespace:
                         )
 
     parser.add_argument("-nt","--threads",type=int, help='Number of threads to run in parallel.', default=1)
+    parser.add_argument("-nc","--chunks",type=int, help='Number of chunks to split the fasta file.', default=10)
 
     parser.add_argument('--load-checkpoint-path', default=None)
     parser.add_argument('--save-checkpoint-path', default=None)

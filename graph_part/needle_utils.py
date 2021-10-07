@@ -67,7 +67,6 @@ def generate_edges(entity_fp: str,
                   full_graph: nx.classes.graph.Graph, 
                   tranformation: str,
                   threshold: float,
-                  ggsearch_path: str,
                   separator: str = '|',
                   ) -> None:
     '''
@@ -82,7 +81,6 @@ def generate_edges(entity_fp: str,
     entity_fp = 'graphpart_0.fasta.tmp'
     
     import subprocess
-    ggs = path.expanduser(ggsearch_path)
     with subprocess.Popen(
             ["needleall","-auto","-stdout", "-aformat", "pair", entity_fp, entity_fp],
             stdout=subprocess.PIPE,
@@ -129,8 +127,6 @@ def compute_edges(query_fp: str,
                   full_graph: nx.classes.graph.Graph, 
                   transformation: str,
                   threshold: float,
-                  e_value: float,
-                  ggsearch_path: str,
                   separator: str = '|',
                   ) -> None:
     '''
@@ -139,7 +135,6 @@ def compute_edges(query_fp: str,
     insert into edge_dict.
     '''
     import subprocess
-    ggs = path.expanduser(ggsearch_path)
     with subprocess.Popen(
             ["needleall","-auto","-stdout", "-aformat", "pair", query_fp, library_fp],
             stdout=subprocess.PIPE,
@@ -183,7 +178,6 @@ def generate_edges_mp(entity_fp: str,
                   full_graph: nx.classes.graph.Graph, 
                   transformation: str,
                   threshold: float,
-                  ggsearch_path: str,
                   n_chunks: int = 10,
                   n_procs: int = 4) -> None:
     '''
@@ -194,7 +188,6 @@ def generate_edges_mp(entity_fp: str,
 
     # chunk the input
     ids, seqs = parse_fasta(entity_fp)
-    e_value = str(len(ids)+1)
 
     n_chunks = chunk_fasta_file(ids, seqs, n_chunks) #get the actual number of generated chunks.
 
@@ -206,7 +199,7 @@ def generate_edges_mp(entity_fp: str,
             for j in range(n_chunks):
                 q = f'graphpart_{i}.fasta.tmp'
                 l = f'graphpart_{j}.fasta.tmp'
-                future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold, e_value, ggsearch_path)
+                future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold)
                 jobs.append(future)
 
         # This should force the script to throw exceptions that occured in the threads
