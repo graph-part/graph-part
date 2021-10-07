@@ -24,7 +24,7 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("-ef","--edge-file",type=str, help='''Path to a comma separated file containing 
                                                             pairwise metrics, the first two columns should 
                                                             contain entity identifiers specified in the 
-                                                            --meta-file.''',
+                                                            --fasta-file.''',
                         default=None,
                         )
     parser.add_argument("-mc","--metric-column",type=int, help='''The 0-indexed or zero-based indexing number,
@@ -79,8 +79,8 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("-nt","--threads",type=int, help='Number of threads to run in parallel.', default=1)
     parser.add_argument("-nc","--chunks",type=int, help='Number of chunks to split the fasta file.', default=10)
 
-    parser.add_argument('--load-checkpoint-path', type=str, default=None, help='Path to save the generated graph.')
-    parser.add_argument('--save-checkpoint-path', type=str, default=None, help='Path to a previously generated graph for quickstart.')
+    parser.add_argument('--load-checkpoint-path', '-lc', type=str, default=None, help='Path to save the generated graph.')
+    parser.add_argument('--save-checkpoint-path', '-sc', type=str, default=None, help='Path to a previously generated graph for quickstart.')
 
     args =  parser.parse_args()
 

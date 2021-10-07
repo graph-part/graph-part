@@ -30,10 +30,39 @@ WIP
 - Write tool to make fasta from assignments (concatenate assignment to header, seperator of choice)
 - Write tool to make fasta from .csv (specifify spearator, label_col (multiple?) and priority_col)
 - Fix alignment of header in removal output - this seems to happen with large Connectivity values:  
+- Figure out how to compute sequence identity (Can get perfect match count from output, normalize ourselves? Default is full alignment length)
+- Figure out needleall parameters (default BLOSUM50, penalties different from ggsearch36)
+- Make nicer code for loading checkpointed graph, insert edges into graph from --fasta-file instead of just loading graph. So can only handle changing labels after precomputation of edges.
+
 ```
 Min-threshold    #Entities       #Edges          Connectivity    #Problematics   #Relocated      #To-be-removed  
 0.01             3539            411624                  460915                  3517            1856            1  
 ```
+
+## API
+
+Long                    | Short | Description
+------------------------|-------|------------
+`--fasta-file`          |`-ff`  | Path to the input fasta file, formatted according to [the input format](#Input_format).
+`--out-file`            |`-of`  | Path at which to save the partition assignments as `.csv`
+`--threshold`           |`-th`  | The desired partitioning threshold, should be within the bounds defined by the metric.
+`--partitions`          |`-pa`  | Number of partitions to generate.
+`--transformation`      |`-tf`  | Transformation to apply to the similarity/distance metric. Graph-Part operates on distances, therefore similarity metrics need to be transformed. Can be any of `one-minus`, `inverse`, `square`, `log`, `None`. See the [source](graph_part/transformations.py) for definitions. As an example, when operating with sequence identities ranging from 0 to 1, the transformation `one-minus` yields corresponding distances.
+`--priority-name`       |`-pn`  | The name of the priority in the meta file. TODO what does this do
+`--labels-name`         |`-ln`  | The name of the label in the meta file. Used for balancing partitions.
+`--initialization-mode` |`-im`  | Use either slow or fast restricted nearest neighbor linkage or no initialization. Can be any of `slow-nn`, `fast-nn`, `simple`. Defaults to `slow-nn`.
+`--threads`             |`-nt`  | The number of threads to run in parallel.
+`--chunks`              |`-nc`  | The number of chunks into which to split the fasta file for multithreaded alignment.
+`--load_checkpoint_path`|`-lc`  | Optional path to save the generated graph. Defaults to `None`.
+`--save_checkpoint_path`|`-sc`  | Optional path to a previously generated graph for quickstart. If provided, no alignment will be performed and all arguments relating to this step are ignored.
+`--edge-file`           |`-ef`  | Optional path to a comma separated file containing precomputed pairwise metrics, the first two columns should contain sequence identifiers specified in the  `--fasta-file`. This is can be used to run Graph-Part with an alignment tool different from the default `needleall`.
+`--metric-column`       |`-mc`  | When using `--edge-file`, specifies in which column the metric is found. Indexing starts at 0, defaults to 2 when left unspecified.
+
+**Flags** 
+Long                    | Short | Description
+------------------------|-------|------------
+`--no-moving`           |`-nm`  |
+`--remove-same`         |`-rs`  |
 
 
 ## FAQ
