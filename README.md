@@ -26,7 +26,11 @@ WIP
 Min-threshold    #Entities       #Edges          Connectivity    #Problematics   #Relocated      #To-be-removed  
 0.01             3539            411624                  460915                  3517            1856            1  
 - Merge graphpart.py and graphpart_ggs.py . Enable previous starting from edge list as a CLI arg in the new script.
-
+- Switch to argparse so that help strings can be displayed for each arg and arg validation is done automatically.
+- Get rid of INITIALIZATION_MODES dict and make it a string CLI arg
+- Fix default-True args to negative flags (e.g. --no-...)
+- Change metric-column to 0-based indexing.
+- Error handling in concurrent.futures - errors not reported, need to request result of calls explicitly
 # FAQ
 WIP
 - **Can I see the process of the tool ?**  
