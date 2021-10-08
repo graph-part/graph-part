@@ -67,7 +67,13 @@ def generate_edges(entity_fp: str,
                   full_graph: nx.classes.graph.Graph, 
                   tranformation: str,
                   threshold: float,
-                  separator: str = '|',
+                  delimiter: str = '|',
+                  gapopen: float = 10,
+                  gapextend: float = 0.5,
+                  endweight: bool = False,
+                  endopen: float = 10,
+                  endextend: float = 0.5,
+                  matrix: str = 'EBLOSUM62',
                   ) -> None:
     '''
     Call needleall and insert found edges into the graph as they are computed.
@@ -76,13 +82,25 @@ def generate_edges(entity_fp: str,
     '''
 
     # rewrite the .fasta file to prevent issues with '|'
-    ids, seqs = parse_fasta(entity_fp, separator)
+    ids, seqs = parse_fasta(entity_fp, delimiter)
     chunk_fasta_file(ids, seqs,n_chunks=1)
     entity_fp = 'graphpart_0.fasta.tmp'
-    
+
+    command = ["needleall","-auto","-stdout", 
+               "-aformat", "pair", 
+               "-gapopen", str(gapopen),
+               "-gapextend", str(gapextend),
+               "-endopen", str(endopen),
+               "-endextend", str(endextend),
+               "-datafile", matrix,
+               "-sprotein1", "-sprotein2", entity_fp, entity_fp]
+    if endweight:
+        command = command + ["-endweight"]   
+
+
     import subprocess
     with subprocess.Popen(
-            ["needleall","-auto","-stdout", "-aformat", "pair", entity_fp, entity_fp],
+            command,
             stdout=subprocess.PIPE,
             bufsize=1,
             universal_newlines=True) as proc:
@@ -127,16 +145,33 @@ def compute_edges(query_fp: str,
                   full_graph: nx.classes.graph.Graph, 
                   transformation: str,
                   threshold: float,
-                  separator: str = '|',
+                  delimiter: str = '|',
+                  gapopen: float = 10,
+                  gapextend: float = 0.5,
+                  endweight: bool = False,
+                  endopen: float = 10,
+                  endextend: float = 0.5,
+                  matrix: str = 'EBLOSUM62',
                   ) -> None:
     '''
     Run needleall on query_fp and library_fp,
     Retrieve pairwise similiarities, transform and
     insert into edge_dict.
     '''
+    command = ["needleall","-auto","-stdout", 
+               "-aformat", "pair", 
+               "-gapopen", str(gapopen),
+               "-gapextend", str(gapextend),
+               "-endopen", str(endopen),
+               "-endextend", str(endextend),
+               "-datafile", matrix,
+               "-sprotein1", "-sprotein2", query_fp, library_fp]
+    if endweight:
+        command = command + ["-endweight"]
+
     import subprocess
     with subprocess.Popen(
-            ["needleall","-auto","-stdout", "-aformat", "pair", query_fp, library_fp],
+            command,
             stdout=subprocess.PIPE,
             bufsize=1,
             universal_newlines=True) as proc:
@@ -179,7 +214,15 @@ def generate_edges_mp(entity_fp: str,
                   transformation: str,
                   threshold: float,
                   n_chunks: int = 10,
-                  n_procs: int = 4) -> None:
+                  n_procs: int = 4,
+                  delimiter: str = '|',
+                  gapopen: float = 10,
+                  gapextend: float = 0.5,
+                  endweight: bool = True,
+                  endopen: float = 10,
+                  endextend: float = 0.5,
+                  matrix: str = 'EBLOSUM62',
+                  ) -> None:
     '''
     Call needleall to compute all pairwise sequence identities in the dataset.
     Uses chunked fasta files and multiple threads with needelall subprocesses 
@@ -199,7 +242,7 @@ def generate_edges_mp(entity_fp: str,
             for j in range(n_chunks):
                 q = f'graphpart_{i}.fasta.tmp'
                 l = f'graphpart_{j}.fasta.tmp'
-                future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold)
+                future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold, delimiter, gapopen, gapextend, endweight, endopen, endextend, matrix)
                 jobs.append(future)
 
         # This should force the script to throw exceptions that occured in the threads

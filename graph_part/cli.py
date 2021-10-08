@@ -76,11 +76,21 @@ def get_args() -> argparse.Namespace:
                                       of within threshold neighbours in other partitions.'''
                         )
 
+    # optimize runtime
     parser.add_argument("-nt","--threads",type=int, help='Number of threads to run in parallel.', default=1)
     parser.add_argument("-nc","--chunks",type=int, help='Number of chunks to split the fasta file.', default=10)
 
+    #checkpointing
     parser.add_argument('--load-checkpoint-path', '-lc', type=str, default=None, help='Path to save the generated graph.')
     parser.add_argument('--save-checkpoint-path', '-sc', type=str, default=None, help='Path to a previously generated graph for quickstart.')
+
+    # customize needle
+    parser.add_argument('--gapopen','-gapopen', type=float, default=10, help='Passed to needle. See EMBOSS documentation.')
+    parser.add_argument('--gapextend','-gapextend', type=float, default=0.5, help='Passed to needle. See EMBOSS documentation.')
+    parser.add_argument('--endweight','-endweight', action='store_true', help='Passed to needle. See EMBOSS documentation.')
+    parser.add_argument('--endopen','-endopen', type=float, default=10, help='Passed to needle. See EMBOSS documentation.')
+    parser.add_argument('--endextend','-endextend', type=float, default=10, help='Passed to needle. See EMBOSS documentation.')
+    parser.add_argument('--matrix', '--datafile','-datafile', type=str, default='EBLOSUM62', help='Passed to needle. See EMBOSS documentation.')
 
     args =  parser.parse_args()
 
