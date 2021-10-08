@@ -44,6 +44,10 @@ def get_args() -> argparse.Namespace:
                         choices=list(TRANSFORMATIONS.keys()), 
                         default=None,
                         )
+    parser.add_argument("-dn","--denominator",type=str, help='Denominator to use for sequence identity computation.', 
+                        choices=['full', 'shortest', 'longest', 'mean', 'no_gaps'], 
+                        default='full',
+                        )
     parser.add_argument("-of","--out-file",type=str, help='The path you want to write the partitioning to.', default='graphpart_result.csv')
 
 

@@ -35,8 +35,14 @@ Min-threshold    #Entities       #Edges          Connectivity    #Problematics  
 0.01             3539            411624                  460915                  3517            1856            1  
 ```
 - Figure out how to compute sequence identity (Can get perfect match count from output, normalize ourselves? Default is full alignment length)
+    - /shorter sequence (CD-HIT default)
+    - /longer sequence (ggsearch36 default?)
+    - /full alignment, including gaps (needle default)
+    - https://www.cell.com/structure/fulltext/S0969-2126(04)00123-6
+    - mmseqs2 a bit complicated https://mmseqs.com/latest/userguide.pdf
+
 - Figure out needleall parameters (default BLOSUM50, penalties different from ggsearch36)
-- Expose needleall parameters to CLI?
+
 
 ## API
 
@@ -47,6 +53,7 @@ Long                    | Short | Description
 `--threshold`           |`-th`  | The desired partitioning threshold, should be within the bounds defined by the metric.
 `--partitions`          |`-pa`  | Number of partitions to generate.
 `--transformation`      |`-tf`  | Transformation to apply to the similarity/distance metric. Graph-Part operates on distances, therefore similarity metrics need to be transformed. Can be any of `one-minus`, `inverse`, `square`, `log`, `None`. See the [source](graph_part/transformations.py) for definitions. As an example, when operating with sequence identities ranging from 0 to 1, the transformation `one-minus` yields corresponding distances.
+`--denominator`         |`-dn`  | Denominator to use for percent sequence identity computation. The number of perfect matching positions is divided by the result of this operation. Can be any of `shortest`, `longest`, `mean`, `full`, `no_gaps`. The first three options are computed from the original lengths of the aligned sequences. `full` refers to the full length of the alignment, including gaps, and is the default. `no_gaps` subtracts gaps from the full alignment length.
 `--priority-name`       |`-pn`  | The name of the priority in the meta file. TODO what does this do
 `--labels-name`         |`-ln`  | The name of the label in the meta file. Used for balancing partitions.
 `--initialization-mode` |`-im`  | Use either slow or fast restricted nearest neighbor linkage or no initialization. Can be any of `slow-nn`, `fast-nn`, `simple`. Defaults to `slow-nn`.
@@ -70,7 +77,7 @@ Long                    | Alternative (original name) | Description
 `--gapextend`           |`-gapextend`   | [0.5 for any sequence] The gap extension penalty is added to the standard gap penalty for each base or residue in the gap. This is how long gaps are penalized. Usually you will expect a few long gaps rather than many short gaps, so the gap extension penalty should be lower than the gap penalty. An exception is where one or both sequences are single reads with possible sequencing errors in which case you would expect many single base gaps. You can get this result by setting the gap open penalty to zero (or very low) and using the gap extension penalty to control gap scoring. (Floating point number from 0.0 to 10.0)
 `--endextend`           |`-endextend`   | [0.5 for any sequence] The end gap extension, penalty is added to the end gap penalty for each base or residue in the end gap. This is how long end gaps are penalized. (Floating point number from 0.0 to 10.0)
 `--endweight`           |`-endweight`   | Flag. Apply end gap penalties.
-`--endopen`             |`-endopen`     | [10.0 for any sequence] The end gap open penalty is the score taken away when an end gap is created. The best value depends on the choice of comparison matrix. The default value assumes you are using the EBLOSUM62 matrix for protein sequences. (Floating point number from 1.0 to 100.0)]
+`--endopen`             |`-endopen`     | [10.0 for any sequence] The end gap open penalty is the score taken away when an end gap is created. The best value depends on the choice of comparison matrix. The default value assumes you are using the EBLOSUM62 matrix for protein sequences. (Floating point number from 1.0 to 100.0)
 `--matrix`              |`-datafile`    | This is the scoring matrix file used when comparing sequences. By default it is the file 'EBLOSUM62'. These files are found in the 'data' directory of the EMBOSS installation.
 
 

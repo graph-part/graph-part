@@ -14,6 +14,22 @@ import concurrent.futures
 
 from .transformations import TRANSFORMATIONS
 
+
+NORMALIZATIONS = {'shortest': lambda a,b,c: a/min(b,c), # a identity b len(seq1) c len(seq2)
+                  'longest': lambda a,b,c: a/max(b,c),
+                  'mean' : lambda a,b,c: a/((b+c)/2),
+                  }
+
+
+
+def get_len_dict(ids: List[str], seqs: List[str]) -> Dict[str,int]:
+    '''Get a dictionary that contains the length of each sequence.'''
+    len_dict = {}
+    for id, seq in zip(ids, seqs):
+        len_dict[id.lstrip('>')] = len(seq)
+    
+    return len_dict
+
 def parse_fasta(fastafile: str, sep='|') -> Tuple[List[str],List[str]]:
 	'''
     Parses fasta file into lists of identifiers and sequences.
@@ -67,6 +83,7 @@ def generate_edges(entity_fp: str,
                   full_graph: nx.classes.graph.Graph, 
                   tranformation: str,
                   threshold: float,
+                  denominator: str = 'full',
                   delimiter: str = '|',
                   gapopen: float = 10,
                   gapextend: float = 0.5,
@@ -83,6 +100,8 @@ def generate_edges(entity_fp: str,
 
     # rewrite the .fasta file to prevent issues with '|'
     ids, seqs = parse_fasta(entity_fp, delimiter)
+    seq_lens = get_len_dict(ids, seqs)
+    #import ipdb; ipdb.set_trace()
     chunk_fasta_file(ids, seqs,n_chunks=1)
     entity_fp = 'graphpart_0.fasta.tmp'
 
@@ -114,8 +133,28 @@ def generate_edges(entity_fp: str,
                 this_lib = line[5:].split()[0].split('|')[0]
 
             elif line.startswith('# Identity:'):
+                identity_line = line
 
-                identity = float(line.split('(')[1][:-3])/100  # Identity:      14/443 ( 3.2%)
+            #TODO gaps is only reported after the identity...
+            elif line.startswith('# Gaps:'):
+                # Gaps:           0/142 ( 0.0%)
+                gaps, rest = line[7:].split('/')
+                gaps = int(gaps)
+                length = int(rest.split('(')[0])
+
+                
+                # Compute different sequence identities as needed.
+
+                if denominator == 'full': # full is returned by default. just need to parse
+                    identity = float(identity_line.split('(')[1][:-3])/100
+                elif denominator == 'no_gaps':
+                    n_matches =  int(identity_line[11:].split('/')[0]) #int() does not mind leading spaces
+                    identity = float(n_matches/(length-gaps))
+                else:
+                    n_matches =  int(identity_line[11:].split('/')[0]) #int() does not mind leading spaces
+                    identity = NORMALIZATIONS[denominator](n_matches, seq_lens[this_qry], seq_lens[this_lib])
+                #line = "# Identity:      14/443 ( 3.2%)"
+                # n_matches =  int(line[11:].split('/')[0]) #int() does not mind leading spaces
 
                 try:
                     metric = TRANSFORMATIONS[tranformation](identity)
@@ -145,6 +184,8 @@ def compute_edges(query_fp: str,
                   full_graph: nx.classes.graph.Graph, 
                   transformation: str,
                   threshold: float,
+                  seq_lens: Dict[str,int],
+                  denominator = 'full',
                   delimiter: str = '|',
                   gapopen: float = 10,
                   gapextend: float = 0.5,
@@ -175,7 +216,7 @@ def compute_edges(query_fp: str,
             stdout=subprocess.PIPE,
             bufsize=1,
             universal_newlines=True) as proc:
-        for line_nr, line in enumerate(proc.stdout):
+        for line_nr, line in enumerate(proc.stdout):  
             if  line.startswith('# 1:'):
 
                 # # 1: P0CV73
@@ -185,7 +226,28 @@ def compute_edges(query_fp: str,
                 this_lib = line[5:].split()[0].split('|')[0]
 
             elif line.startswith('# Identity:'):
-                identity = float(line.split('(')[1][:-3])/100
+                identity_line = line
+
+            #TODO gaps is only reported after the identity...
+            elif line.startswith('# Gaps:'):
+                # Gaps:           0/142 ( 0.0%)
+                gaps, rest = line[7:].split('/')
+                gaps = int(gaps)
+                length = int(rest.split('(')[0])
+
+                
+                # Compute different sequence identities as needed.
+
+                if denominator == 'full': # full is returned by default. just need to parse
+                    identity = float(identity_line.split('(')[1][:-3])/100
+                elif denominator == 'no_gaps':
+                    n_matches =  int(identity_line[11:].split('/')[0]) #int() does not mind leading spaces
+                    identity = float(n_matches/(length-gaps))
+                else:
+                    n_matches =  int(identity_line[11:].split('/')[0]) #int() does not mind leading spaces
+                    identity = NORMALIZATIONS[denominator](n_matches, seq_lens[this_qry], seq_lens[this_lib])
+                #line = "# Identity:      14/443 ( 3.2%)"
+                # n_matches =  int(line[11:].split('/')[0]) #int() does not mind leading spaces
                 
                 try:
                     metric = TRANSFORMATIONS[transformation](identity)
@@ -213,6 +275,7 @@ def generate_edges_mp(entity_fp: str,
                   full_graph: nx.classes.graph.Graph, 
                   transformation: str,
                   threshold: float,
+                  denominator: str = 'full',
                   n_chunks: int = 10,
                   n_procs: int = 4,
                   delimiter: str = '|',
@@ -231,6 +294,7 @@ def generate_edges_mp(entity_fp: str,
 
     # chunk the input
     ids, seqs = parse_fasta(entity_fp)
+    seq_lens = get_len_dict(ids, seqs)
 
     n_chunks = chunk_fasta_file(ids, seqs, n_chunks) #get the actual number of generated chunks.
 
@@ -242,7 +306,7 @@ def generate_edges_mp(entity_fp: str,
             for j in range(n_chunks):
                 q = f'graphpart_{i}.fasta.tmp'
                 l = f'graphpart_{j}.fasta.tmp'
-                future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold, delimiter, gapopen, gapextend, endweight, endopen, endextend, matrix)
+                future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold, seq_lens, denominator, delimiter, gapopen, gapextend, endweight, endopen, endextend, matrix)
                 jobs.append(future)
 
         # This should force the script to throw exceptions that occured in the threads
