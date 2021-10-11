@@ -12,7 +12,11 @@ conda install -c bioconda emboss
 
 Alternatively, on Ubuntu, EMBOSS is available directly via `sudo apt-get install emboss` .
 
-###TODO pip graphpart
+To install Graph-Part, run
+```
+pip install graphpart
+```
+The command `graphpart` will now be available on your command line.
 
 ## Instructions
 WIP  
@@ -34,14 +38,16 @@ WIP
 Min-threshold    #Entities       #Edges          Connectivity    #Problematics   #Relocated      #To-be-removed  
 0.01             3539            411624                  460915                  3517            1856            1  
 ```
-- Figure out how to compute sequence identity (Can get perfect match count from output, normalize ourselves? Default is full alignment length)
+- Figure out default sequence identity (Can get perfect match count from output, normalize ourselves? Default is full alignment length)
     - /shorter sequence (CD-HIT default)
     - /longer sequence (ggsearch36 default?)
     - /full alignment, including gaps (needle default)
     - https://www.cell.com/structure/fulltext/S0969-2126(04)00123-6
     - mmseqs2 a bit complicated https://mmseqs.com/latest/userguide.pdf
 
-- Figure out needleall parameters (default BLOSUM50, penalties different from ggsearch36)
+- Figure out needleall default parameters (default BLOSUM62, penalties different from ggsearch36)
+- Make `one-minus` default transformation?
+- Support additional alignment tools? (ggsearch36 code would be ready)
 
 
 ## API
