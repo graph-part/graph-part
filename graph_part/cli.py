@@ -42,7 +42,7 @@ def get_args() -> argparse.Namespace:
                         )
     parser.add_argument("-tf","--transformation",type=str, help='Transformation to apply to the similarity/distance metric.', 
                         choices=list(TRANSFORMATIONS.keys()), 
-                        default=None,
+                        default='one-minus',
                         )
     parser.add_argument("-dn","--denominator",type=str, help='Denominator to use for sequence identity computation.', 
                         choices=['full', 'shortest', 'longest', 'mean', 'no_gaps'], 

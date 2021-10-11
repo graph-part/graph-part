@@ -135,7 +135,7 @@ def generate_edges(entity_fp: str,
             elif line.startswith('# Identity:'):
                 identity_line = line
 
-            #TODO gaps is only reported after the identity...
+            #Gap is reported after identity in the output.
             elif line.startswith('# Gaps:'):
                 # Gaps:           0/142 ( 0.0%)
                 gaps, rest = line[7:].split('/')
