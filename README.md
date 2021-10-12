@@ -35,7 +35,7 @@ MAPSWRFFVCFLLWGGTELCSPQPVWQDEGQRLRPSKPPTVMVECQEAQLVVIVSKDLFGTGKLIRPADL
 >P0CL66|label=CLASSB|priority=1
 MKKYLLGIGLILALIACKQNVSSLDEKNSVSVDLPGEMKVLVSKEKNKDGKYDLIATVDKLELKGTSDKN
 ```
-Alternatively , `:` and ` - ` (note the spaces on either side of the `-`) can be used as separators instead of `|`. It should be taken care that the sequence identifiers themselves contain no separator symbols. The keywords `label` and `priority` can be customized by specifying the `--labels-name` and `--priority-name` arguments. Both elements of the header are optional, Graph-Part can also just partition based on sequences alone, without any class balancing. (TODO untested?)  
+Alternatively , `:` and &nbsp;`-`&nbsp; (note there are spaces on either side of the `-`) can be used as separators instead of `|`. It should be taken care that the sequence identifiers themselves contain no separator symbols. The keywords `label` and `priority` can be customized by specifying the `--labels-name` and `--priority-name` arguments. Both elements of the header are optional, Graph-Part can also just partition based on sequences alone, without any class balancing. (TODO untested?)  
 You can find a script to convert `.csv` datasets into the custom `.fasta` format at [csv_to_fasta.py](csv_to_fasta.py)
 
 
