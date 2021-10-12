@@ -21,17 +21,25 @@ pip install graphpart
 The command `graphpart` will now be available on your command line.
 
 ## Instructions
-WIP  
-Parallel example command
+As an example, this is a basic command for partitioning a dataset at a maximum pairwise cross-partition identity of 30% into 5 folds. The resulting partitions are balanced for equal frequencies of the class labels specified in `label=` in the FASTA headers. `--threads` can be adapted according to your system and has no effect on the partitioning itself.
 ```
-graphpart  --fasta-file netgpi_dataset.fasta --threshold 0.3 --transformation one-minus --out-file graphpart_assignments.csv --labels-name label --partitions 5 --threads 12
+graphpart  --fasta-file netgpi_dataset.fasta --threshold 0.3 --out-file graphpart_assignments.csv --labels-name label --partitions 5 --threads 12
 ```
+
 
 ## Input format
-WIP
+Graph-Part works on FASTA files with a custom header format, e.g.
+```
+>P42098|label=CLASSA|priority=0
+MAPSWRFFVCFLLWGGTELCSPQPVWQDEGQRLRPSKPPTVMVECQEAQLVVIVSKDLFGTGKLIRPADL
+>P0CL66|label=CLASSB|priority=1
+MKKYLLGIGLILALIACKQNVSSLDEKNSVSVDLPGEMKVLVSKEKNKDGKYDLIATVDKLELKGTSDKN
+```
+Alternatively , `:` and ` - ` (note the spaces on either side of the `-`) can be used as separators instead of `|`. It should be taken care that the sequence identifiers themselves contain no separator symbols. The keywords `label` and `priority` can be customized by specifying the `--labels-name` and `--priority-name` arguments. Both elements of the header are optional, Graph-Part can also just partition based on sequences alone, without any class balancing. (TODO untested?)  
+You can find a script to convert `.csv` datasets into the custom `.fasta` format at [csv_to_fasta.py](csv_to_fasta.py)
 
 
-# TODO
+## TODO
 
 - Write tool to make fasta from assignments (concatenate assignment to header, seperator of choice)
 - Write tool to make fasta from .csv (specifify spearator, label_col (multiple?) and priority_col)
@@ -40,8 +48,6 @@ WIP
 Min-threshold    #Entities       #Edges          Connectivity    #Problematics   #Relocated      #To-be-removed  
 0.01             3539            411624                  460915                  3517            1856            1  
 ```
-- Support additional alignment tools? (ggsearch36 code would be ready)
-
 
 ## API
 
@@ -83,7 +89,7 @@ Long                    | Alternative (original name) | Description
 ## FAQ
 WIP
 - **Can I see the process of the tool ?**  
-Progress bars are tedious to implement when calling external programs, as we are doing it with `needleall`. As an alternative, when running Graph-Part in parallel mode, the progress can be inspected via `htop` and other utilies. The active `needleall` processes indicate which chunks are being processed at the moment. Chunks are processed starting from 0 up to `chunks`.
+Progress bars are tedious to implement when calling external programs in a parallel setup, as we are doing it with `needleall`. As an alternative, while running Graph-Part, the progress can be inspected via `htop` and other utilies. The active `needleall` processes indicate which chunks are being processed at the moment. Chunks are processed starting from 0 up to `chunks`.
 
 - **How should I pick `chunks` ?**  
 `chunks` should be picked so that all `threads` are utilized. Each chunk is aligned to each other chunk, so `threads` <= `chunks`*`chunks` results in full utilization.
