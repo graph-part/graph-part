@@ -74,6 +74,7 @@ Long                    | Short | Description
 ------------------------|-------|------------
 `--no-moving`           |`-nm`  | By default, the removing procedure tries to relocate sequences to another partition if it finds more within-threshold neighbours in any. This flag disallows moving.
 `--remove-same`         |`-rs`  | This here is the inverse of removal_type (has default True), not sure what it does TODO
+`--nucleotide`          |`-nu`  | Use this flag if the input contains nucleotide sequences. By default, assumes proteins.
 
 **Parameters passed to `needleall`** 
 Long                    | Alternative (original name) | Description

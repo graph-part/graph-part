@@ -79,6 +79,7 @@ def get_args() -> argparse.Namespace:
                                       in the same partition. The default removes based on the number
                                       of within threshold neighbours in other partitions.'''
                         )
+    parser.add_argument("-nu","--nucleotide", action='store_true', help= 'Input contains nucleotide sequences (Default is proteins).')
 
     # optimize runtime
     parser.add_argument("-nt","--threads",type=int, help='Number of threads to run in parallel.', default=1)

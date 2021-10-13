@@ -423,10 +423,10 @@ def main():
         load_edge_list(args.edge_file, full_graph, args.transformation, threshold, args.metric_column)
     elif args.threads>1:
         generate_edges_mp(args.fasta_file, full_graph,args.transformation, threshold, denominator=args.denominator, n_chunks=args.chunks, n_procs=args.threads, delimiter='|', 
-                            gapopen=args.gapopen, gapextend=args.gapextend, endweight=args.endweight, endopen=args.endopen, endextend=args.endextend, matrix=args.matrix)
+                            is_nucleotide=args.nucleotide, gapopen=args.gapopen, gapextend=args.gapextend, endweight=args.endweight, endopen=args.endopen, endextend=args.endextend, matrix=args.matrix)
     else:
         generate_edges(args.fasta_file,full_graph, args.transformation, threshold, denominator=args.denominator, delimiter='|',
-                            gapopen=args.gapopen, gapextend=args.gapextend, endweight=args.endweight, endopen=args.endopen, endextend=args.endextend, matrix=args.matrix)
+                            is_nucleotide=args.nucleotide, gapopen=args.gapopen, gapextend=args.gapextend, endweight=args.endweight, endopen=args.endopen, endextend=args.endextend, matrix=args.matrix)
 
     ## Let's look at the number of edges
     print("Full graph nr. of edges:", full_graph.number_of_edges())

@@ -85,6 +85,7 @@ def generate_edges(entity_fp: str,
                   threshold: float,
                   denominator: str = 'full',
                   delimiter: str = '|',
+                  is_nucleotide: bool = False,
                   gapopen: float = 10,
                   gapextend: float = 0.5,
                   endweight: bool = False,
@@ -103,7 +104,11 @@ def generate_edges(entity_fp: str,
     seq_lens = get_len_dict(ids, seqs)
     #import ipdb; ipdb.set_trace()
     chunk_fasta_file(ids, seqs,n_chunks=1)
-    entity_fp = 'graphpart_0.fasta.tmp'
+
+    if is_nucleotide:
+        type_1, type_2, = '-snucleotide1', '-snucleotide2'
+    else:
+        type_1, type_2 = '-sprotein1', '-sprotein2'
 
     command = ["needleall","-auto","-stdout", 
                "-aformat", "pair", 
@@ -112,7 +117,7 @@ def generate_edges(entity_fp: str,
                "-endopen", str(endopen),
                "-endextend", str(endextend),
                "-datafile", matrix,
-               "-sprotein1", "-sprotein2", entity_fp, entity_fp]
+               type_1, type_2, entity_fp, entity_fp]
     if endweight:
         command = command + ["-endweight"]   
 
@@ -187,6 +192,7 @@ def compute_edges(query_fp: str,
                   seq_lens: Dict[str,int],
                   denominator = 'full',
                   delimiter: str = '|',
+                  is_nucleotide: bool = False,
                   gapopen: float = 10,
                   gapextend: float = 0.5,
                   endweight: bool = False,
@@ -199,6 +205,11 @@ def compute_edges(query_fp: str,
     Retrieve pairwise similiarities, transform and
     insert into edge_dict.
     '''
+    if is_nucleotide:
+        type_1, type_2, = '-snucleotide1', '-snucleotide2'
+    else:
+        type_1, type_2 = '-sprotein1', '-sprotein2'
+
     command = ["needleall","-auto","-stdout", 
                "-aformat", "pair", 
                "-gapopen", str(gapopen),
@@ -206,7 +217,7 @@ def compute_edges(query_fp: str,
                "-endopen", str(endopen),
                "-endextend", str(endextend),
                "-datafile", matrix,
-               "-sprotein1", "-sprotein2", query_fp, library_fp]
+               type_1, type_2, query_fp, library_fp]
     if endweight:
         command = command + ["-endweight"]
 
@@ -279,6 +290,7 @@ def generate_edges_mp(entity_fp: str,
                   n_chunks: int = 10,
                   n_procs: int = 4,
                   delimiter: str = '|',
+                  is_nucleotide: bool = False,
                   gapopen: float = 10,
                   gapextend: float = 0.5,
                   endweight: bool = True,
@@ -306,7 +318,7 @@ def generate_edges_mp(entity_fp: str,
             for j in range(n_chunks):
                 q = f'graphpart_{i}.fasta.tmp'
                 l = f'graphpart_{j}.fasta.tmp'
-                future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold, seq_lens, denominator, delimiter, gapopen, gapextend, endweight, endopen, endextend, matrix)
+                future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold, seq_lens, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)
                 jobs.append(future)
 
         # This should force the script to throw exceptions that occured in the threads
