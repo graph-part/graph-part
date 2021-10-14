@@ -3,7 +3,15 @@ Protein dataset partitioning pipeline (Gíslason 2021)
 
 Graph-Part is a Python package for generating partitions (i.e. train-test splits) of biological sequence datasets. It ensures minimal homology between different partitions, while balancing partitions for labels or other desired criteria.
 
-## Installation
+## Test installation
+```
+conda install -c bioconda emboss
+git clone https://github.com/fteufel/graph-part.git
+cd graph-part
+pip install .
+```
+
+## Installation - WIP
 
 Graph-Part relies on [needleall](https://www.bioinformatics.nl/cgi-bin/emboss/help/needleall) from the [EMBOSS](http://emboss.sourceforge.net/) package for fast Needleman-Wunsch alignments of sequences. Please refer to the official EMBOSS documentation for installation methods.
 
