@@ -7,6 +7,7 @@ from typing import Dict, List, Tuple
 import time
 from collections import Counter
 from itertools import product
+import time
 
 from .needle_utils import generate_edges, generate_edges_mp
 from .precomputed_utils import load_edge_list
@@ -381,7 +382,7 @@ def removal_needed(
 
 def main():
     
-
+    s = time.perf_counter()
     
     args = get_args()
     allow_moving = not args.no_moving
@@ -420,13 +421,22 @@ def main():
                 full_graph.add_edge(qry, lib, metric=data['metric'])
             
     elif args.edge_file is not None:
+        print('Parsing edge list.')
         load_edge_list(args.edge_file, full_graph, args.transformation, threshold, args.metric_column)
+        elapsed_align = time.perf_counter() - s
+        print(f"Edge list parsing executed in {elapsed_align:0.2f} seconds.")
     elif args.threads>1:
+        print('Computing pairwise sequence identities.')
         generate_edges_mp(args.fasta_file, full_graph,args.transformation, threshold, denominator=args.denominator, n_chunks=args.chunks, n_procs=args.threads, delimiter='|', 
                             is_nucleotide=args.nucleotide, gapopen=args.gapopen, gapextend=args.gapextend, endweight=args.endweight, endopen=args.endopen, endextend=args.endextend, matrix=args.matrix)
+        elapsed_align = time.perf_counter() - s
+        print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")
     else:
+        print('Computing pairwise sequence identities.')
         generate_edges(args.fasta_file,full_graph, args.transformation, threshold, denominator=args.denominator, delimiter='|',
                             is_nucleotide=args.nucleotide, gapopen=args.gapopen, gapextend=args.gapextend, endweight=args.endweight, endopen=args.endopen, endextend=args.endextend, matrix=args.matrix)
+        elapsed_align = time.perf_counter() - s
+        print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")
 
     ## Let's look at the number of edges
     print("Full graph nr. of edges:", full_graph.number_of_edges())
@@ -463,8 +473,8 @@ def main():
     ## clustering to outfile. This will probably change...
     df.to_csv(args.out_file)
 
-if __name__ == "__main__":
-    s = time.perf_counter()
-    main()
     elapsed = time.perf_counter() - s
-    print(f"{__file__} executed in {elapsed:0.2f} seconds.")
+    print(f"Graph-Part executed in {elapsed:0.2f} seconds.")
+
+if __name__ == "__main__":
+    main()
