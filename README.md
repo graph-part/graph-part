@@ -97,9 +97,6 @@ Long                    | Alternative (original name) | Description
 
 ## FAQ
 WIP
-- **Can I see the process of the tool ?**  
-Progress bars are tedious to implement when calling external programs in a parallel setup, as we are doing it with `needleall`. As an alternative, while running Graph-Part, the progress can be inspected via `htop` and other utilies. The active `needleall` processes indicate which chunks are being processed at the moment. Chunks are processed starting from 0 up to `chunks`.
-
 - **How should I pick `chunks` ?**  
 `chunks` should be picked so that all `threads` are utilized. Each chunk is aligned to each other chunk, so `threads` <= `chunks`*`chunks` results in full utilization.
 

@@ -11,7 +11,7 @@ import math
 from itertools import groupby
 from typing import Dict, List, Tuple, Iterator
 import concurrent.futures
-
+from tqdm import tqdm
 from .transformations import TRANSFORMATIONS
 
 
@@ -190,6 +190,7 @@ def compute_edges(query_fp: str,
                   transformation: str,
                   threshold: float,
                   seq_lens: Dict[str,int],
+                  progress_bar: tqdm,
                   denominator = 'full',
                   delimiter: str = '|',
                   is_nucleotide: bool = False,
@@ -241,6 +242,9 @@ def compute_edges(query_fp: str,
 
             #TODO gaps is only reported after the identity...
             elif line.startswith('# Gaps:'):
+
+                progress_bar.update(1)
+
                 # Gaps:           0/142 ( 0.0%)
                 gaps, rest = line[7:].split('/')
                 gaps = int(gaps)
@@ -313,12 +317,13 @@ def generate_edges_mp(entity_fp: str,
     # start n_procs threads, each thread starts a subprocess
     # Because of threading's GIL we can write edges directly to the full_graph object.
     jobs = []
+    pbar = tqdm(total= len(ids)*len(ids))
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_procs) as executor:
         for i in range(n_chunks):
             for j in range(n_chunks):
                 q = f'graphpart_{i}.fasta.tmp'
                 l = f'graphpart_{j}.fasta.tmp'
-                future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold, seq_lens, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)
+                future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold, seq_lens, pbar, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)
                 jobs.append(future)
 
         # This should force the script to throw exceptions that occured in the threads
