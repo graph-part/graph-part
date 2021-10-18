@@ -80,10 +80,12 @@ def get_args() -> argparse.Namespace:
                                       of within threshold neighbours in other partitions.'''
                         )
     parser.add_argument("-nu","--nucleotide", action='store_true', help= 'Input contains nucleotide sequences (Default is proteins).')
+    parser.add_argument("-tr","--triangular", action='store_true', help='Only compute triangular part of full distance matrix.')
 
     # optimize runtime
     parser.add_argument("-nt","--threads",type=int, help='Number of threads to run in parallel.', default=1)
     parser.add_argument("-nc","--chunks",type=int, help='Number of chunks to split the fasta file.', default=10)
+    
 
     #checkpointing
     parser.add_argument('--load-checkpoint-path', '-lc', type=str, default=None, help='Path to save the generated graph.')

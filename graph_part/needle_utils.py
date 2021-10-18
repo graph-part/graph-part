@@ -293,6 +293,7 @@ def generate_edges_mp(entity_fp: str,
                   denominator: str = 'full',
                   n_chunks: int = 10,
                   n_procs: int = 4,
+                  triangular: bool = False,
                   delimiter: str = '|',
                   is_nucleotide: bool = False,
                   gapopen: float = 10,
@@ -317,10 +318,22 @@ def generate_edges_mp(entity_fp: str,
     # start n_procs threads, each thread starts a subprocess
     # Because of threading's GIL we can write edges directly to the full_graph object.
     jobs = []
-    pbar = tqdm(total= len(ids)*len(ids))
+
+    # this is approximate, but good enough for progress bar drawing.
+    if triangular:
+        n_alignments = 0
+        chunk_size = math.ceil(len(ids)/n_chunks)
+        for i in range(n_chunks):
+            for j in range(i, n_chunks):
+                n_alignments += chunk_size*chunk_size
+    else:
+        n_alignments = len(ids)*len(ids)
+
+    pbar = tqdm(total= n_alignments)
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_procs) as executor:
         for i in range(n_chunks):
-            for j in range(n_chunks):
+            start = i if triangular else 0
+            for j in range(start, n_chunks):
                 q = f'graphpart_{i}.fasta.tmp'
                 l = f'graphpart_{j}.fasta.tmp'
                 future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold, seq_lens, pbar, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)

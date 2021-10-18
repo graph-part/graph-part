@@ -427,7 +427,7 @@ def main():
         print(f"Edge list parsing executed in {elapsed_align:0.2f} seconds.")
     elif args.threads>1:
         print('Computing pairwise sequence identities.')
-        generate_edges_mp(args.fasta_file, full_graph,args.transformation, threshold, denominator=args.denominator, n_chunks=args.chunks, n_procs=args.threads, delimiter='|', 
+        generate_edges_mp(args.fasta_file, full_graph,args.transformation, threshold, denominator=args.denominator, n_chunks=args.chunks, n_procs=args.threads, triangular=args.triangular, delimiter='|', 
                             is_nucleotide=args.nucleotide, gapopen=args.gapopen, gapextend=args.gapextend, endweight=args.endweight, endopen=args.endopen, endextend=args.endextend, matrix=args.matrix)
         elapsed_align = time.perf_counter() - s
         print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")

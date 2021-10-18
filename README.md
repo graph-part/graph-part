@@ -83,6 +83,7 @@ Long                    | Short | Description
 `--no-moving`           |`-nm`  | By default, the removing procedure tries to relocate sequences to another partition if it finds more within-threshold neighbours in any. This flag disallows moving.
 `--remove-same`         |`-rs`  | This here is the inverse of removal_type (has default True), not sure what it does TODO
 `--nucleotide`          |`-nu`  | Use this flag if the input contains nucleotide sequences. By default, assumes proteins.
+`--triangular`          |`-tr`  | Only compute triangular of the full distance matrix. Twice as fast, but can yield slightly different results if an alignment has two different solutions with the same score, but different identities.
 
 **Parameters passed to `needleall`** 
 Long                    | Alternative (original name) | Description
