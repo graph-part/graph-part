@@ -8,7 +8,6 @@ COPY README.md .
 COPY webserver/requirements.txt .
 RUN pip3 install --no-cache-dir .
 
-#COPY models /usr/local/lib/python3.8/site-packages/signalp/model_weights
 
 #COPY webserver/generate_output.py .
 COPY webserver/run.sh .
