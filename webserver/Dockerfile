@@ -2,7 +2,7 @@ FROM python:3.8-slim
 
 WORKDIR /home/graph-part
 #TODO do we need all these copies?
-COPY graph-part graph-part
+COPY graph_part graph_part
 COPY setup.py .
 COPY README.md .
 COPY webserver/requirements.txt .
