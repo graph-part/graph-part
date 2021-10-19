@@ -93,14 +93,14 @@ arguments:
           Slow-NN: slow-nn
           Fast-NN: fast-nn
     -
-        default_value: ''
+        default_value: 'on'
         description: Moving
         key: ''
         key_value_separator: ' '
         required: false
         type: toggle
         options:
-            'off': '--disallow-moving'
+            'off': '--no-moving'
             'on': ''
     -
         default_value: ''
