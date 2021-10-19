@@ -130,8 +130,8 @@ arguments:
         required: false
         type: toggle
         options:
-            'yes': '--triangular'
-            'no': ''
+            'on': '--triangular'
+            'off': ''
 
 
 
