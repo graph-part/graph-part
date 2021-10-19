@@ -146,7 +146,6 @@ arguments:
         key_value_separator: ' '
         required: true
         type: hidden
-    -
 
 
             
