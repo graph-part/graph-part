@@ -64,7 +64,7 @@ def chunk_fasta_file(ids: List[str], seqs: List[str], n_chunks: int) -> int:
     empty_chunks = 0
     for i in range(n_chunks):
         # because of ceil() we sometimes make less partitions than specified.
-        if i*chunk_size>len(ids):
+        if i*chunk_size>=len(ids):
             empty_chunks +=1
             continue
 
