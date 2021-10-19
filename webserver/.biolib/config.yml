@@ -93,7 +93,7 @@ arguments:
           Slow-NN: slow-nn
           Fast-NN: fast-nn
     -
-        default_value: 'on'
+        default_value: ''
         description: Moving
         key: ''
         key_value_separator: ' '

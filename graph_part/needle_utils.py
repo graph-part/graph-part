@@ -117,7 +117,7 @@ def generate_edges(entity_fp: str,
                "-endopen", str(endopen),
                "-endextend", str(endextend),
                "-datafile", matrix,
-               type_1, type_2, entity_fp, entity_fp]
+               type_1, type_2, 'graphpart_0.fasta.tmp', 'graphpart_0.fasta.tmp']
     if endweight:
         command = command + ["-endweight"]   
 
