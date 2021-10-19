@@ -18,4 +18,4 @@ graphpart -ff /zhome/1d/8/153438/experiments/graph-part/benchmarking/data/mloci_
 --save-checkpoint-path /work3/felteu/rna_benchmark \
 --nucleotide \
 --matrix EDNAFULL\
---diagonal
+--triangular
