@@ -114,14 +114,14 @@ arguments:
             'off': ''
     -
         default_value: ''
-        description: Type of data
+        description: Nucleotide dataset
         key: ''
         key_value_separator: ' '
         required: false
         type: toggle
         options:
-            'Nucleotide': '--nucleotide'
-            'Protein': ''
+            'on': '--nucleotide'
+            'off': ''
     -
         default_value: ''
         description: Compute upper triangle only
