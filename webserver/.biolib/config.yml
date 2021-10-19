@@ -3,7 +3,7 @@ description_file: README.md
 modules:
     main:
         image: 'local-docker://graph-part-docker:latest'
-        command: /home/signalp/run.sh
+        command: /home/graph-part/run.sh
         working_directory: /home/graph-part/
         input_files:
             - COPY / /home/graph-part/
