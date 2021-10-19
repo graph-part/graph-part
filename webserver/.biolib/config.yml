@@ -20,6 +20,13 @@ arguments:
         key_value_separator: ' '
         required: true
         type: text-file
+    -   
+        default_value: /home/graph-part/output/graphpart_result.csv
+        description: 'Partition assignments'
+        key: '--out-file'
+        key_value_separator: ' '
+        required: true
+        type: hidden
     -
         default_value: 0.3
         description: 'Threshold for partitioning'
@@ -60,13 +67,6 @@ arguments:
           Shortest: shortest
           Mean: mean
           No-gaps: no_gaps
-    -
-        default_value: /home/graph-part/graphpart_result.csv
-        description: ''
-        key: '--out-file'
-        key_value_separator: ' '
-        required: true
-        type: hidden
     -
         default_value: label
         description: 'Name of label in fasta file header'
@@ -132,8 +132,21 @@ arguments:
         options:
             'on': '--triangular'
             'off': ''
-
-
+    -
+        default_value: 8
+        description: 'Number of threads'
+        key: '--threads'
+        key_value_separator: ' '
+        required: true
+        type: hidden
+    -
+        default_value: 100
+        description: 'Number of chunks'
+        key: '--chunks'
+        key_value_separator: ' '
+        required: true
+        type: hidden
+    -
 
 
             
