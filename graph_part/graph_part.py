@@ -3,7 +3,7 @@
 import pandas as pd 
 import numpy as np
 import networkx as nx
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 import time
 from collections import Counter
 from itertools import product
@@ -266,9 +266,17 @@ def partition_data(full_graph: nx.classes.graph.Graph,
 def remover(full_graph: nx.classes.graph.Graph, 
             part_graph: nx.classes.graph.Graph, 
             threshold:float, 
+            json_dict: Dict[str, Any],
             move_to_most_neighbourly:bool = True, 
             ignore_priority:bool = True,
             simplistic_removal:bool = True):
+
+    if ignore_priority:
+        json_dict['removal_step_1'] = {}
+        dict_key = 'removal_step_1'
+    else:
+        json_dict['removal_step_2'] = {}
+        dict_key = 'removal_step_2'
     
     print("Min-threshold", "\t", "#Entities", "\t", "#Edges", "\t", "Connectivity", "\t", "#Problematics", "\t", "#Relocated", "\t", "#To-be-removed")
     removing_round = 0
@@ -321,6 +329,16 @@ def remover(full_graph: nx.classes.graph.Graph,
         remove_these = [x[0] for x in sorted(((n,d['between_connectivity']) for n,d in full_graph.nodes(data=True) if d['between_connectivity'] > 0), key=lambda x:x[1], reverse=True)[:number_to_remove]]
         
         print(round(min_oc_wth,7), "\t\t", full_graph.number_of_nodes(), "\t\t", full_graph.number_of_edges(), "\t\t", bc_sum, "\t\t", bc_count, "\t\t", number_moved, "\t\t", len(remove_these))
+        
+        json_dict[dict_key][removing_round] = {
+                                                "Min-threshold": round(min_oc_wth,7) ,
+                                                "#Entities": full_graph.number_of_nodes(),
+                                                "#Edges": full_graph.number_of_edges(),
+                                                "Connectivity": int(bc_sum), 
+                                                "#Problematics": int(bc_count), 
+                                                "#Relocated": number_moved, 
+                                                "#To-be-removed":len(remove_these)
+                                                }
 
         full_graph.remove_nodes_from(remove_these)
         # If we've removed the last problematic entities, we stop
@@ -381,10 +399,16 @@ def removal_needed(
     return False
 
 def main():
+
+    # in this dict we collect everything that we want to report.
+    json_dict = {}
     
     s = time.perf_counter()
+    json_dict['time_script_start'] = s
     
     args = get_args()
+    json_dict['config'] = vars(args)
+
     allow_moving = not args.no_moving
     removal_type = not args.remove_same
     try:
@@ -394,6 +418,7 @@ def main():
         raise ValueError("Output file path (-of/--out-file) improper or nonexistent.") 
     
     threshold = TRANSFORMATIONS[args.transformation](args.threshold)
+    json_dict['config']['threshold_transformed'] = threshold
 
     ## End of parameter validation
 
@@ -408,6 +433,7 @@ def main():
 
     ## Let's see the initial label distribution
     print(pd.DataFrame(labels).T)
+    json_dict['labels_start'] = labels
 
 
     ## Get the edges
@@ -438,8 +464,12 @@ def main():
         elapsed_align = time.perf_counter() - s
         print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")
 
+
     ## Let's look at the number of edges
     print("Full graph nr. of edges:", full_graph.number_of_edges())
+
+    json_dict['graph_edges_start'] = full_graph.number_of_edges()
+    json_dict['time_edges_complete'] = time.perf_counter()
 
     if args.save_checkpoint_path is not None:
         import pickle
@@ -448,33 +478,52 @@ def main():
     ## Finally, let's partition this
     partition_data(full_graph, part_graph, labels, threshold, args.partitions, args.initialization_mode)
 
-    df, _ = display_results(part_graph, full_graph, labels, args.partitions)
+    df, result = display_results(part_graph, full_graph, labels, args.partitions)
     df.to_csv(args.out_file + "pre-removal")
     print('Currently have this many samples:', full_graph.number_of_nodes())
+
+    json_dict['partitioning_pre_removal'] = result.to_json()
+    json_dict['samples_pre_removal'] = full_graph.number_of_nodes()
+    json_dict['score_pre_removal'] = score_partitioning(result[range(args.partitions)])
+
     
     ## Check if we need to remove any
     if removal_needed(part_graph, full_graph, threshold):     
         print('Need to remove! Currently have this many samples:', full_graph.number_of_nodes())
 
-        remover(full_graph, part_graph, threshold, allow_moving, True, removal_type)    
+        remover(full_graph, part_graph, threshold, json_dict, allow_moving, True, removal_type)    
 
     if removal_needed(part_graph, full_graph, threshold):   
         print('Need to remove priority! Currently have this many samples:', full_graph.number_of_nodes())
-        remover(full_graph, part_graph, threshold, allow_moving, False, removal_type)    
+        remover(full_graph, part_graph, threshold, json_dict, allow_moving, False, removal_type)    
 
     print('After removal we have this many samples:', full_graph.number_of_nodes())
 
 
-    df, _ = display_results(part_graph, full_graph, labels, args.partitions)
+    df, result = display_results(part_graph, full_graph, labels, args.partitions)
+
+    json_dict['partitioning_after_removal'] = result.to_json()
+    json_dict['samples_after_removal'] = full_graph.number_of_nodes()
+    json_dict['score_after_removal'] = score_partitioning(result[range(args.partitions)])
 
     if removal_needed(part_graph, full_graph, threshold):
         print ("Something is wrong! Removal still needed!")
+        json_dict['removal_needed_end'] = True
+    else:
+        json_dict['removal_needed_end'] = False
 
     ## clustering to outfile. This will probably change...
     df.to_csv(args.out_file)
 
     elapsed = time.perf_counter() - s
+    json_dict['time_script_complete'] = time.perf_counter()
+
     print(f"Graph-Part executed in {elapsed:0.2f} seconds.")
+
+    import json
+    import os
+    #import ipdb; ipdb.set_trace()
+    json.dump(json_dict, open(os.path.join(os.path.dirname(args.out_file),'graphpart_report.json'),'w'))
 
 if __name__ == "__main__":
     main()

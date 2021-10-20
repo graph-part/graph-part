@@ -1,0 +1,164 @@
+biolib_version: 2
+description_file: README.md
+modules:
+    main:
+        image: 'local-docker://graph-part-docker:latest'
+        command: /home/graph-part/run.sh
+        working_directory: /home/graph-part/
+        input_files:
+            - COPY / /home/graph-part/
+        output_files:
+            - COPY /home/graph-part/output/ /
+        source_files:
+            - COPY /sample.fasta /home/graph-part/
+output_type: markdown
+arguments:
+    -
+        default_value: /home/graph-part/sample.fasta
+        description: 'Sequence submission: paste the sequence(s) and/or upload a local fasta file'
+        key: '--fasta-file'
+        key_value_separator: ' '
+        required: true
+        type: text-file
+    -   
+        default_value: /home/graph-part/output/graphpart_result.csv
+        description: 'Partition assignments'
+        key: '--out-file'
+        key_value_separator: ' '
+        required: true
+        type: hidden
+    -
+        default_value: 0.3
+        description: 'Threshold for partitioning'
+        key: '--threshold'
+        key_value_separator: ' '
+        required: true
+        type: number
+    -
+        default_value: 5
+        description: 'Number of partitions'
+        key: '--partitions'
+        key_value_separator: ' '
+        required: true
+        type: number
+    -
+        default_value: 'one-minus'
+        description: 'Transformation'
+        key: '--transformation'
+        key_value_separator: ' '
+        required: true
+        type: dropdown
+        options:
+          One-minus: one-minus
+          Inverse: inverse
+          Square: square
+          Log: log
+          None: None
+    -
+        default_value: 'full'
+        description: 'Denominator for % sequence identity'
+        key: '--denominator'
+        key_value_separator: ' '
+        required: true
+        type: dropdown
+        options:
+          Full: full
+          Longest: longest
+          Shortest: shortest
+          Mean: mean
+          No-gaps: no_gaps
+    -
+        default_value: label
+        description: 'Name of label in fasta file header'
+        key: '--labels-name'
+        key_value_separator: ' '
+        required: true
+        type: text
+    -   
+        default_value: priority
+        description: 'Name of priority in fasta file header'
+        key: '--priority-name'
+        key_value_separator: ' '
+        required: true
+        type: text
+    -
+        default_value: 'slow-nn'
+        description: 'Partitioning initialization mode'
+        key: '--initialization-mode'
+        key_value_separator: ' '
+        required: true
+        type: dropdown
+        options:
+          None: None
+          Slow-NN: slow-nn
+          Fast-NN: fast-nn
+    -
+        default_value: ''
+        description: Moving
+        key: ''
+        key_value_separator: ' '
+        required: false
+        type: toggle
+        options:
+            'off': '--no-moving'
+            'on': ''
+    -
+        default_value: ''
+        description: Remove within
+        key: ''
+        key_value_separator: ' '
+        required: false
+        type: toggle
+        options:
+            'on': '--remove-same'
+            'off': ''
+    -
+        default_value: ''
+        description: Nucleotide dataset
+        key: ''
+        key_value_separator: ' '
+        required: false
+        type: toggle
+        options:
+            'on': '--nucleotide'
+            'off': ''
+    -
+        default_value: ''
+        description: Compute upper triangle only
+        key: ''
+        key_value_separator: ' '
+        required: false
+        type: toggle
+        options:
+            'on': '--triangular'
+            'off': ''
+    -
+        default_value: 8
+        description: 'Number of threads'
+        key: '--threads'
+        key_value_separator: ' '
+        required: true
+        type: hidden
+    -
+        default_value: 100
+        description: 'Number of chunks'
+        key: '--chunks'
+        key_value_separator: ' '
+        required: true
+        type: hidden
+
+
+            
+citation:
+    entry_type: article
+    author: >-
+        Teufel, Felix and Armenteros, Jose Juan Almagro and Johansen, Alexander Rosenberg and Gislason, Magnus Halldor and Pihl, Silas Irby and Tsirigos, Konstantinos D and Winther, Ole and Brunak, Soren and Von Heijne, Gunnar and Nielsen, Henrik
+    month: '6'
+    title: SignalP 6.0 achieves signal peptide prediction across all types using protein language models
+    year: '2021'
+    doi: '10.1101/2021.06.09.447770'
+    elocation-id: "2021.06.09.447770"
+    publisher: Cold Spring Harbor Laboratory
+    journal: bioRxiv
+    URL: https://www.biorxiv.org/content/early/2021/06/10/2021.06.09.447770
+    eprint: https://www.biorxiv.org/content/early/2021/06/10/2021.06.09.447770.full.pdf

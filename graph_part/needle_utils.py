@@ -64,7 +64,7 @@ def chunk_fasta_file(ids: List[str], seqs: List[str], n_chunks: int) -> int:
     empty_chunks = 0
     for i in range(n_chunks):
         # because of ceil() we sometimes make less partitions than specified.
-        if i*chunk_size>len(ids):
+        if i*chunk_size>=len(ids):
             empty_chunks +=1
             continue
 
@@ -117,7 +117,7 @@ def generate_edges(entity_fp: str,
                "-endopen", str(endopen),
                "-endextend", str(endextend),
                "-datafile", matrix,
-               type_1, type_2, entity_fp, entity_fp]
+               type_1, type_2, 'graphpart_0.fasta.tmp', 'graphpart_0.fasta.tmp']
     if endweight:
         command = command + ["-endweight"]   
 
