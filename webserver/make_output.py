@@ -106,7 +106,7 @@ if 'removal_step_1' in results:
     output_md += '### Homology removal report\n\n'
     df = pd.DataFrame.from_dict(results['removal_step_1']).T
 
-    make_progress_plot(df, results['threshold_transformed'], 'output/removal_step_1_plot.png')
+    make_progress_plot(df, results['config']['threshold_transformed'], 'output/removal_step_1_plot.png')
     output_md += '#### Graph connectivity vs. number of sequences\n\n'
     output_md += f'\n\n ![plot]({"removal_step_1_plot.png"})'
     output_md += '\n\n'
@@ -118,7 +118,7 @@ if 'removal_step_2' in results:
     output_md += '### Homology removal report - second pass'
     df = pd.DataFrame.from_dict(results['removal_step_2']).T
 
-    make_progress_plot(df, results['threshold_transformed'], 'output/removal_step_2_plot.png')
+    make_progress_plot(df, results['config']['threshold_transformed'], 'output/removal_step_2_plot.png')
     output_md += f'\n\n ![plot]({"removal_step_2_plot.png"})'
     output_md += '\n\n'
     output_md += tabulate(df, tablefmt='github', headers='keys')
