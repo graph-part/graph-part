@@ -7,7 +7,7 @@ import pandas as pd
 from tabulate import tabulate
 import matplotlib.pyplot as plt
 
-results = json.load(open("graphpart_report.json","r"))
+results = json.load(open("output/graphpart_report.json","r"))
 
 
 def make_progress_plot(df, out_name):
