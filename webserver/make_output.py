@@ -6,6 +6,7 @@ import json
 import pandas as pd
 from tabulate import tabulate
 import matplotlib.pyplot as plt
+import datetime
 
 results = json.load(open("output/graphpart_report.json","r"))
 
@@ -57,6 +58,7 @@ def make_partition_plot(df, out_name):
     df.T.plot.bar(stacked=True, figsize = (12,4.5))
     plt.xlabel('Partitions')
     plt.ylabel('Sequences')
+    plt.title('Composition of partitions')
     plt.tight_layout()
     plt.savefig(out_name)
 
@@ -84,6 +86,19 @@ output_md += '\n\n'
 make_partition_plot(df, 'output/partition_plot.png')
 output_md += f'\n\n ![plot]({"partition_plot.png"})'
 output_md += '\n\n'
+
+
+
+delta = datetime.timedelta(seconds=results['time_script_complete'] - results['time_script_start'])
+output_md += f'Total runtime: {str(delta)}\n\n'
+
+delta = datetime.timedelta(seconds=results['time_edges_complete'] - results['time_script_start'])
+output_md += f'Alignment runtime: {str(delta)}\n\n'
+
+
+
+
+
 
 ## make detailed table of removal processes
 if 'removal_step_1' in results:

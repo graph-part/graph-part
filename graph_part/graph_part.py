@@ -418,6 +418,7 @@ def main():
         raise ValueError("Output file path (-of/--out-file) improper or nonexistent.") 
     
     threshold = TRANSFORMATIONS[args.transformation](args.threshold)
+    json_dict['config']['threshold_transformed'] = threshold
 
     ## End of parameter validation
 
