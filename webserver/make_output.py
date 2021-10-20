@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 
 results = json.load(open("output/graphpart_report.json","r"))
 
+import os
+print(os.getcwd())
 
 def make_progress_plot(df, out_name):
     '''
@@ -65,7 +67,7 @@ output_md += f'Retained **{results["samples_after_removal"]:,}** sequences.\n\n'
 df = pd.read_json(results['partitioning_after_removal'])
 output_md += tabulate(df, tablefmt='github', headers='keys')
 output_md += '\n\n'
-make_partition_plot(df, 'partition_plot.png')
+make_partition_plot(df, 'output/partition_plot.png')
 output_md += f'\n\n ![plot]({"partition_plot.png"})'
 output_md += '\n\n'
 
@@ -75,7 +77,7 @@ if 'removal_step_1' in results:
     output_md += '### Homology removal report\n\n'
     df = pd.DataFrame.from_dict(results['removal_step_1']).T
 
-    make_progress_plot(df, 'removal_step_1_plot.png')
+    make_progress_plot(df, 'output/removal_step_1_plot.png')
     output_md += '#### Graph connectivity vs. number of sequences\n\n'
     output_md += f'\n\n ![plot]({"removal_step_1_plot.png"})'
     output_md += '\n\n'
@@ -87,7 +89,7 @@ if 'removal_step_2' in results:
     output_md += '### Homology removal report - second pass'
     df = pd.DataFrame.from_dict(results['removal_step_2']).T
 
-    make_progress_plot(df, 'removal_step_2_plot.png')
+    make_progress_plot(df, 'output/removal_step_2_plot.png')
     output_md += f'\n\n ![plot]({"removal_step_2_plot.png"})'
     output_md += '\n\n'
     output_md += tabulate(df, tablefmt='github', headers='keys')
