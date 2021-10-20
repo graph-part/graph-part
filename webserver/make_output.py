@@ -9,8 +9,6 @@ import matplotlib.pyplot as plt
 
 results = json.load(open("output/graphpart_report.json","r"))
 
-import os
-print(os.getcwd())
 
 def make_progress_plot(df, out_name):
     '''
@@ -18,7 +16,7 @@ def make_progress_plot(df, out_name):
     Connectivity vs. iteration
     Number vs. iteration
     '''
-    plt.figure()
+    plt.figure(figsize = (12,4.5))
     fig, ax1 = plt.subplots()
 
     color = 'tab:red'
@@ -40,7 +38,7 @@ def make_progress_plot(df, out_name):
 
 def make_partition_plot(df, out_name):
     df = df.set_index('label', drop=True).drop(['count'], axis=1)
-    df.T.plot.bar(stacked=True)
+    df.T.plot.bar(stacked=True, figsize = (12,4.5))
     plt.xlabel('Partitions')
     plt.ylabel('Sequences')
     plt.tight_layout()
