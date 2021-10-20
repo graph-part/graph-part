@@ -10,6 +10,6 @@ COPY webserver/requirements.txt .
 RUN pip install --no-cache-dir .
 RUN conda install -c bioconda emboss
 
-#COPY webserver/generate_output.py .
+COPY webserver/make_output.py .
 COPY webserver/run.sh .
 RUN chmod +x run.sh
