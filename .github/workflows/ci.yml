@@ -26,8 +26,8 @@ jobs:
             -   name: Install BioLib CLI
                 run: pip3 install pybiolib
 
-            -   name: Publish new version to BioLib if on biolib branch
-                if: github.ref == 'refs/heads/biolib'
+            -   name: Publish new version to BioLib if on main branch
+                if: github.ref == 'refs/heads/main'
                 run: cd webserver && biolib push $BIOLIB_PROJECT_URI
                 env:
                     BIOLIB_TOKEN: ${{ secrets.BIOLIB_TOKEN }}
