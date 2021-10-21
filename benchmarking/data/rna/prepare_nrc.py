@@ -2,6 +2,8 @@ import os
 import subprocess
 import shutil
 import glob
+import random
+random.seed(123)
     
 # extracted from https://github.com/IcarPA-TBlab/nrc/blob/master/data/ECCB2017/dataset_Rfam_6320_13classes.fasta
 families = {
@@ -649,7 +651,6 @@ for c in classes:
 # Finally, to create a balanced dataset, 
 # we randomly selected 500 sequences for each ncRNA class, except IRES for 
 # which there are only 320 available sequences, to obtain 6320 ncRNA sequences.
-import random
 
 files = glob.glob('temp_dir/*')
 with open('nRC_all.fasta', 'w') as f:
@@ -661,13 +662,13 @@ with open('nRC_all.fasta', 'w') as f:
             # pick max 500.
             if len(headers)<=500:
                 for h, s in zip(headers, seqs):
-                    f.write(h)
+                    f.write(h.replace('/','_')
                     f.write(s)
 
             else:
                 inds = random.sample(range(0, len(headers)), 500)
                 for i in inds:
-                    f.write(headers[i])
+                    f.write(headers[i].replace('/','_'))
                     f.write(seqs[i])
 
 
