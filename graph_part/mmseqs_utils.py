@@ -36,13 +36,10 @@ def generate_edges_mmseqs(entity_fp: str,
     # since we need to have a valid diagonal for the banded alignment.
     if is_nucleotide:
         subprocess.run(['mmseqs', 'prefilter', '-s', '7.5', 'temp/seq_db', 'temp/seq_db', 'temp/pref'])
-        # .dbtype
-        # .index
-        # .0 .1 ... .4
     else:
         subprocess.run(['mmseqs_fake_prefilter.sh', 'temp/seq_db', 'temp/seq_db', 'temp/pref', 'seq_db'])
 
-    subprocess.run(['mmseqs', 'align', 'temp/seq_db', 'temp/seq_db', 'temp/pref', 'temp/align_db'])
+    subprocess.run(['mmseqs', 'align',  'temp/seq_db', 'temp/seq_db', 'temp/pref', 'temp/align_db', '--alignment-mode', '3', '-e', 'inf'])
     subprocess.run(['mmseqs', 'convertalis', 'temp/seq_db', 'temp/seq_db', 'temp/align_db', 'temp/alignments.tab'])
 
     # Read the result
