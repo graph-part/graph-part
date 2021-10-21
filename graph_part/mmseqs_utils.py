@@ -21,6 +21,11 @@ def generate_edges_mmseqs(entity_fp: str,
                   is_nucleotide: bool = False,
                   ) -> None:
 
+
+    if shutil.which('mmseqs') is None:
+        print('MMseqs2 was not found. Please run `conda install -c conda-forge -c bioconda mmseqs2`')
+        exit()
+
     os.makedirs('temp', exist_ok=True)
 
     # Run all mmseqs ops to get a tab file that contains the alignments.
@@ -31,8 +36,11 @@ def generate_edges_mmseqs(entity_fp: str,
     # since we need to have a valid diagonal for the banded alignment.
     if is_nucleotide:
         subprocess.run(['mmseqs', 'prefilter', '-s', '7.5', 'temp/seq_db', 'temp/seq_db', 'temp/pref'])
+        # .dbtype
+        # .index
+        # .0 .1 ... .4
     else:
-        subprocess.run(['mmseqs_fake_prefilter', 'temp/seq_db', 'temp/seq_db', 'temp/pref'])
+        subprocess.run(['mmseqs_fake_prefilter.sh', 'temp/seq_db', 'temp/seq_db', 'temp/pref', 'seq_db'])
 
     subprocess.run(['mmseqs', 'align', 'temp/seq_db', 'temp/seq_db', 'temp/pref', 'temp/align_db'])
     subprocess.run(['mmseqs', 'convertalis', 'temp/seq_db', 'temp/seq_db', 'temp/align_db', 'temp/alignments.tab'])
