@@ -1,6 +1,7 @@
 import subprocess
 import os
-from transformations import TRANSFORMATIONS
+import shutil
+from .transformations import TRANSFORMATIONS
 import networkx as nx
 from tqdm import tqdm
 
@@ -23,7 +24,7 @@ def generate_edges_mmseqs(entity_fp: str,
     os.makedirs('temp', exist_ok=True)
 
     # Run all mmseqs ops to get a tab file that contains the alignments.
-    typ = 2 if is_nucleotide else 1
+    typ = '2' if is_nucleotide else '1'
     subprocess.run(['mmseqs', 'createdb', '--dbtype', typ, entity_fp, 'temp/seq_db'])
     subprocess.run(['mmseqs', 'prefilter', '-s', '7.5', 'temp/seq_db', 'temp/seq_db', 'temp/pref'])
     subprocess.run(['mmseqs', 'align', 'temp/seq_db', 'temp/seq_db', 'temp/pref', 'temp/align_db'])
@@ -39,7 +40,7 @@ def generate_edges_mmseqs(entity_fp: str,
             ident = float(spl[2])
 
             try:
-                metric = TRANSFORMATIONS[tranformation](ident))
+                metric = TRANSFORMATIONS[tranformation](ident)
             except ValueError or TypeError:
                 raise TypeError("Failed to interpret the metric column value %r. Please ensure that the edge list file is correctly formatted and that the correct column is specified." % (spl[1]))
             
@@ -55,4 +56,4 @@ def generate_edges_mmseqs(entity_fp: str,
             else:
                 full_graph.add_edge(this_qry, this_lib, metric=metric)  
 
-    os.removedirs('temp')
+    shutil.rmtree('temp')

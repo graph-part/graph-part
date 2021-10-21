@@ -107,14 +107,12 @@ def get_args() -> argparse.Namespace:
     parser_needle.add_argument('--endextend','-endextend', type=float, default=10, help='Passed to needle. See EMBOSS documentation.')
     parser_needle.add_argument('--matrix', '--datafile','-datafile', type=str, default='EBLOSUM62', help='Passed to needle. See EMBOSS documentation.')
 
-    args =  parser.parse_args()
-
 
     # 4. Arguments that are only required with mmseqs2.
     parser_mmseqs2.add_argument("-nu","--nucleotide", action='store_true', help= 'Input contains nucleotide sequences (Default is proteins).')
 
 
-
+    args =  parser.parse_args()
 
     ## Validate argument combinations.
     #TODO rather make those warnings
