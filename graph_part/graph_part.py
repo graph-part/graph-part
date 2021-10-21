@@ -453,14 +453,14 @@ def main():
 
     elif args.alignment_mode == 'mmseqs2':
         from .mmseqs_utils import generate_edges_mmseqs
-        generate_edges_mmseqs(args.fasta_file, full_graph, args.transformation, args.threshold, delimiter='|', is_nucleotide=args.nucleotide)
+        generate_edges_mmseqs(args.fasta_file, full_graph, args.transformation, threshold, delimiter='|', is_nucleotide=args.nucleotide)
         elapsed_align = time.perf_counter() - s
         print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")    
 
     elif args.alignment_mode == 'needle' and args.threads>1:
         from .needle_utils import generate_edges_mp
         print('Computing pairwise sequence identities.')
-        generate_edges_mp(args.fasta_file, full_graph,args.transformation, threshold, denominator=args.denominator, n_chunks=args.chunks, n_procs=args.threads, triangular=args.triangular, delimiter='|', 
+        generate_edges_mp(args.fasta_file, full_graph, args.transformation, threshold, denominator=args.denominator, n_chunks=args.chunks, n_procs=args.threads, triangular=args.triangular, delimiter='|', 
                             is_nucleotide=args.nucleotide, gapopen=args.gapopen, gapextend=args.gapextend, endweight=args.endweight, endopen=args.endopen, endextend=args.endextend, matrix=args.matrix)
         elapsed_align = time.perf_counter() - s
         print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")
