@@ -4,3 +4,4 @@ fasta-36.3.8h
 *.csv
 *.fasta
 *.pyc
+*.fa
