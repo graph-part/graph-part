@@ -9,8 +9,6 @@ from collections import Counter
 from itertools import product
 import time
 
-from .needle_utils import generate_edges, generate_edges_mp
-from .precomputed_utils import load_edge_list
 from .transformations import TRANSFORMATIONS
 from .cli import get_args
 
@@ -438,31 +436,45 @@ def main():
 
     ## Get the edges
     if args.load_checkpoint_path is not None:
-        print('Loading edge weights from previously saved graph.')
+        print('Loading edge weights from previously saved graph. Provided alignment options will be ignored, threshold will be updated.')
         # load from previous checkpoint
         checkpoint_graph = pickle.load(full_graph, open(args.load_checkpoint_path+'.pickle', 'rb'))
         # filter edges to match defined threshold - need not be the same as when checkpoint was saved.
         for qry, lib, data in checkpoint_graph.edges(data=True):
             if data['metric'] > threshold:
                 full_graph.add_edge(qry, lib, metric=data['metric'])
-            
-    elif args.edge_file is not None:
+
+    elif args.alignment_mode == 'precomputed':
+        from .precomputed_utils import load_edge_list
         print('Parsing edge list.')
         load_edge_list(args.edge_file, full_graph, args.transformation, threshold, args.metric_column)
         elapsed_align = time.perf_counter() - s
         print(f"Edge list parsing executed in {elapsed_align:0.2f} seconds.")
-    elif args.threads>1:
+
+    elif args.alignment_mode == 'mmseqs2':
+        from .mmseqs_utils import generate_edges_mmseqs
+        generate_edges_mmseqs(args.fasta_file, full_graph, args.transformation, args.threshold, delimiter='|', is_nucleotide=args.nucleotide)
+        elapsed_align = time.perf_counter() - s
+        print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")    
+
+    elif args.alignment_mode == 'needle' and args.threads>1:
+        from .needle_utils import generate_edges_mp
         print('Computing pairwise sequence identities.')
         generate_edges_mp(args.fasta_file, full_graph,args.transformation, threshold, denominator=args.denominator, n_chunks=args.chunks, n_procs=args.threads, triangular=args.triangular, delimiter='|', 
                             is_nucleotide=args.nucleotide, gapopen=args.gapopen, gapextend=args.gapextend, endweight=args.endweight, endopen=args.endopen, endextend=args.endextend, matrix=args.matrix)
         elapsed_align = time.perf_counter() - s
         print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")
-    else:
+
+    elif args.alignment_mode == 'needle':
+        from .needle_utils import generate_edges
         print('Computing pairwise sequence identities.')
         generate_edges(args.fasta_file,full_graph, args.transformation, threshold, denominator=args.denominator, delimiter='|',
                             is_nucleotide=args.nucleotide, gapopen=args.gapopen, gapextend=args.gapextend, endweight=args.endweight, endopen=args.endopen, endextend=args.endextend, matrix=args.matrix)
         elapsed_align = time.perf_counter() - s
         print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")
+
+    else:
+        raise NotImplementedError('Encountered unspecified alignment mode. This should never happen.')
 
 
     ## Let's look at the number of edges
