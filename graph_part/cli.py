@@ -116,13 +116,9 @@ def get_args() -> argparse.Namespace:
 
     ## Validate argument combinations.
     #TODO rather make those warnings
-    #if args.load_checkpoint_path is not None and args.threads>1:
-    #    print('Cannot use parallel processing when starting from a precomputed graph.  --threads argument will be ignored.')
+    if args.load_checkpoint_path is not None:
+        print('Starting from precomputed checkpoint, alignment mode options will be ignored.')
 
-    #if args.edge_file is not None and args.threads>1:
-    #    print('Cannot use parallel processing when starting from a precomputed edge list. --threads argument will be ignored.')
-
-    
 
     # prevent unintentional overwriting of previous graph. Can be very expensive to recompute for large datasets
     if args.load_checkpoint_path is not None and (args.load_checkpoint_path == args.save_checkpoint_path): 
@@ -138,9 +134,3 @@ def get_args() -> argparse.Namespace:
         
     
     return args
-
-
-# # Debug.
-# if __name__ == '__main__':
-#     args = get_args()
-#     import IPython; IPython.embed()
