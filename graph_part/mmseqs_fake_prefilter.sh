@@ -3,6 +3,7 @@
 # copied from https://mmseqs.com/latest/userguide.pdf
 # added LDB arg = local db path to make links work when using relative 
 # paths. assumes pref is created in the same dir as db.
+# e.g. when aligning temp/db to temp/db and creating temp/pref, link to db and not temp/db
 
 fake_pref() {
 QDB="$1"

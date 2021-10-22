@@ -453,7 +453,7 @@ def main():
 
     elif args.alignment_mode == 'mmseqs2':
         from .mmseqs_utils import generate_edges_mmseqs
-        generate_edges_mmseqs(args.fasta_file, full_graph, args.transformation, threshold, delimiter='|', is_nucleotide=args.nucleotide)
+        generate_edges_mmseqs(args.fasta_file, full_graph, args.transformation, threshold, args.threshold, delimiter='|', is_nucleotide=args.nucleotide)
         elapsed_align = time.perf_counter() - s
         print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")    
 

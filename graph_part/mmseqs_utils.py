@@ -16,7 +16,8 @@ from tqdm import tqdm
 def generate_edges_mmseqs(entity_fp: str, 
                   full_graph: nx.classes.graph.Graph, 
                   tranformation: str,
-                  threshold: float,
+                  threshold_transformed: float,
+                  threshold_original: float = None, # use original threshold (before one-minus) to pass to mmseqs
                   delimiter: str = '|',
                   is_nucleotide: bool = False,
                   ) -> None:
@@ -39,7 +40,13 @@ def generate_edges_mmseqs(entity_fp: str,
     else:
         subprocess.run(['mmseqs_fake_prefilter.sh', 'temp/seq_db', 'temp/seq_db', 'temp/pref', 'seq_db'])
 
-    subprocess.run(['mmseqs', 'align',  'temp/seq_db', 'temp/seq_db', 'temp/pref', 'temp/align_db', '--alignment-mode', '3', '-e', 'inf'])
+    # --min-seq-id FLOAT
+    # threshold 0.3 --> transformed 0.7
+    # ignore all higher than 0.7
+    command = ['mmseqs', 'align',  'temp/seq_db', 'temp/seq_db', 'temp/pref', 'temp/align_db', '--alignment-mode', '3', '-e', 'inf']
+    if threshold_original is not None:
+        command = command + ['--min-seq-id', str(threshold_original)]
+    subprocess.run(command)
     subprocess.run(['mmseqs', 'convertalis', 'temp/seq_db', 'temp/seq_db', 'temp/align_db', 'temp/alignments.tab'])
 
     # Read the result
@@ -58,7 +65,7 @@ def generate_edges_mmseqs(entity_fp: str,
             
             if this_qry == this_lib:
                 continue
-            if metric > threshold:
+            if metric > threshold_transformed:
                 continue
             if not full_graph.has_node(this_qry) or not full_graph.has_node(this_lib):
                 continue
