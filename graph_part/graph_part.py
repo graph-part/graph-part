@@ -535,7 +535,7 @@ def main():
     import json
     import os
     #import ipdb; ipdb.set_trace()
-    json.dump(json_dict, open(os.path.join(os.path.dirname(args.out_file),'graphpart_report.json'),'w'))
+    json.dump(json_dict, open(os.path.splitext(args.out_file)[0]+'_report.json','w'))
 
 if __name__ == "__main__":
     main()
