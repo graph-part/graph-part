@@ -18,6 +18,7 @@ def generate_edges_mmseqs(entity_fp: str,
                   tranformation: str,
                   threshold_transformed: float,
                   threshold_original: float = None, # use original threshold (before one-minus) to pass to mmseqs
+                  denominator: str = 'longest',
                   delimiter: str = '|',
                   is_nucleotide: bool = False,
                   ) -> None:
@@ -40,10 +41,10 @@ def generate_edges_mmseqs(entity_fp: str,
     else:
         subprocess.run(['mmseqs_fake_prefilter.sh', 'temp/seq_db', 'temp/seq_db', 'temp/pref', 'seq_db'])
 
-    # --min-seq-id FLOAT
-    # threshold 0.3 --> transformed 0.7
-    # ignore all higher than 0.7
-    command = ['mmseqs', 'align',  'temp/seq_db', 'temp/seq_db', 'temp/pref', 'temp/align_db', '--alignment-mode', '3', '-e', 'inf']
+    # 0: alignment length 1: shorter, 2: longer sequence
+    id_mode = {'n_aligned':'0', 'shortest':'1', 'longest':'2'}[denominator]
+    
+    command = ['mmseqs', 'align',  'temp/seq_db', 'temp/seq_db', 'temp/pref', 'temp/align_db', '--alignment-mode', '3', '-e', 'inf', '--seq-id-mode', id_mode]
     if threshold_original is not None:
         command = command + ['--min-seq-id', str(threshold_original)]
     subprocess.run(command)

@@ -18,7 +18,7 @@ arguments:
         description: 'Choose the alignment mode'
         key_value_separator: ''
         default_value: 'needle'
-        type: dropdown
+        type: radio
         required: True
         options:
             'EMBOSS needle': needle
@@ -83,7 +83,18 @@ arguments:
                     options:
                         'on': '--nucleotide'
                         'off': ''
-
+                -
+                    default_value: 'shortest'
+                    description: 'Denominator for % sequence identity'
+                    key: '--denominator'
+                    key_value_separator: ' '
+                    required: true
+                    type: dropdown
+                    options:
+                        N aligned positions: n_aligned
+                        Longest: longest
+                        Shortest: shortest
+                        
     -
         default_value: /home/graph-part/sample.fasta
         description: 'Sequence submission: paste the sequence(s) and/or upload a local fasta file'
@@ -152,14 +163,14 @@ arguments:
           Fast-NN: fast-nn
     -
         default_value: ''
-        description: Moving
+        description: Disallow moving
         key: ''
         key_value_separator: ' '
         required: false
         type: toggle
         options:
-            'off': '--no-moving'
-            'on': ''
+            'off': ''
+            'on': '--no-moving'
     -
         default_value: ''
         description: Remove within
