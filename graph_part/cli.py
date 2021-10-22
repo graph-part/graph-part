@@ -110,7 +110,7 @@ def get_args() -> argparse.Namespace:
 
     # 4. Arguments that are only required with mmseqs2.
     parser_mmseqs2.add_argument("-nu","--nucleotide", action='store_true', help= 'Input contains nucleotide sequences (Default is proteins).')
-    parser_needle.add_argument("-dn","--denominator",type=str, help='Denominator to use for sequence identity computation.', 
+    parser_mmseqs2.add_argument("-dn","--denominator",type=str, help='Denominator to use for sequence identity computation.', 
                         choices=['shortest', 'longest', 'n_aligned'], 
                         default='shortest',
                         )
