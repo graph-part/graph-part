@@ -13,6 +13,77 @@ modules:
             - COPY /sample.fasta /home/graph-part/
 output_type: markdown
 arguments:
+    -   
+        key: ''
+        description: 'Choose the alignment mode'
+        key_value_separator: ''
+        default_value: 'needle'
+        type: dropdown
+        required: True
+        options:
+            'EMBOSS needle': needle
+            'MMseqs2': mmseqs2
+        sub_arguments:
+            needle:
+                -
+                    default_value: 'full'
+                    description: 'Denominator for % sequence identity'
+                    key: '--denominator'
+                    key_value_separator: ' '
+                    required: true
+                    type: dropdown
+                    options:
+                        Full: full
+                        Longest: longest
+                        Shortest: shortest
+                        Mean: mean
+                        No-gaps: no_gaps
+                -
+                    default_value: ''
+                    description: Compute upper triangle only
+                    key: ''
+                    key_value_separator: ' '
+                    required: false
+                    type: toggle
+                    options:
+                        'on': '--triangular'
+                        'off': ''
+                -
+                    default_value: 8
+                    description: 'Number of threads'
+                    key: '--threads'
+                    key_value_separator: ' '
+                    required: true
+                    type: hidden
+                -
+                    default_value: 100
+                    description: 'Number of chunks'
+                    key: '--chunks'
+                    key_value_separator: ' '
+                    required: true
+                    type: hidden
+                -
+                    default_value: ''
+                    description: Nucleotide dataset
+                    key: ''
+                    key_value_separator: ' '
+                    required: false
+                    type: toggle
+                    options:
+                        'on': '--nucleotide'
+                        'off': ''
+            mmseqs2:
+                -
+                    default_value: ''
+                    description: Nucleotide dataset
+                    key: ''
+                    key_value_separator: ' '
+                    required: false
+                    type: toggle
+                    options:
+                        'on': '--nucleotide'
+                        'off': ''
+
     -
         default_value: /home/graph-part/sample.fasta
         description: 'Sequence submission: paste the sequence(s) and/or upload a local fasta file'
@@ -54,19 +125,6 @@ arguments:
           Square: square
           Log: log
           None: None
-    -
-        default_value: 'full'
-        description: 'Denominator for % sequence identity'
-        key: '--denominator'
-        key_value_separator: ' '
-        required: true
-        type: dropdown
-        options:
-          Full: full
-          Longest: longest
-          Shortest: shortest
-          Mean: mean
-          No-gaps: no_gaps
     -
         default_value: label
         description: 'Name of label in fasta file header'
@@ -112,40 +170,8 @@ arguments:
         options:
             'on': '--remove-same'
             'off': ''
-    -
-        default_value: ''
-        description: Nucleotide dataset
-        key: ''
-        key_value_separator: ' '
-        required: false
-        type: toggle
-        options:
-            'on': '--nucleotide'
-            'off': ''
-    -
-        default_value: ''
-        description: Compute upper triangle only
-        key: ''
-        key_value_separator: ' '
-        required: false
-        type: toggle
-        options:
-            'on': '--triangular'
-            'off': ''
-    -
-        default_value: 8
-        description: 'Number of threads'
-        key: '--threads'
-        key_value_separator: ' '
-        required: true
-        type: hidden
-    -
-        default_value: 100
-        description: 'Number of chunks'
-        key: '--chunks'
-        key_value_separator: ' '
-        required: true
-        type: hidden
+
+
 
 
             

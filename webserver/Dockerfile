@@ -9,6 +9,7 @@ COPY webserver/requirements.txt .
 #RUN conda install -c anaconda python=3.8
 RUN pip install --no-cache-dir .
 RUN conda install -c bioconda emboss
+RUN conda install -c conda-forge -c bioconda mmseqs2 
 
 COPY webserver/make_output.py .
 COPY webserver/run.sh .

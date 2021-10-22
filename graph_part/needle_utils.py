@@ -6,6 +6,7 @@ as edges into a provided networkx graph.
 import multiprocessing
 import networkx as nx
 from os import path, remove
+import shutil
 import numpy as np
 import math
 from itertools import groupby
@@ -98,6 +99,9 @@ def generate_edges(entity_fp: str,
     This is the default implementation that runs one single process for the full
     dataset without multithreading.
     '''
+    if shutil.which('needleall') is None:
+        print('EMBOSS needleall was not found. Please run `conda install -c bioconda emboss`')
+        exit()
 
     # rewrite the .fasta file to prevent issues with '|'
     ids, seqs = parse_fasta(entity_fp, delimiter)
@@ -308,6 +312,9 @@ def generate_edges_mp(entity_fp: str,
     Uses chunked fasta files and multiple threads with needelall subprocesses 
     to speed up computation.
     '''
+    if shutil.which('needleall') is None:
+        print('EMBOSS needleall was not found. Please run `conda install -c bioconda emboss`')
+        exit()
 
     # chunk the input
     ids, seqs = parse_fasta(entity_fp)
