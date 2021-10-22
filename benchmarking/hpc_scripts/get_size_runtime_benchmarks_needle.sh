@@ -7,7 +7,7 @@
 #BSUB -R "span[hosts=1]"
 #BSUB -R "rusage[mem=40GB]"
 
-
+CONDA_BASE=$(conda info --base) ; source $CONDA_BASE/etc/profile.d/conda.sh
 conda activate gp-env
 
 for NUMBER in 1000 2000 3000 4000 5000 6000 7000 8000 9000 10000 11000 12000 13000 14000 15000 16000 17000 18000 19000 20000
@@ -21,3 +21,5 @@ graphpart needle -ff "/zhome/1d/8/153438/experiments/graph-part/benchmarking/run
 --out-file "/zhome/1d/8/153438/experiments/graph-part/benchmarking/runtime_benchmark/needle_${NUMBER}_seqs_result.csv"
 
 done
+
+rm -rf /zhome/1d/8/153438/experiments/graph-part/benchmarking/runtime_benchmark/*.csv*
