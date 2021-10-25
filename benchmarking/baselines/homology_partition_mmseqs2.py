@@ -88,7 +88,11 @@ def mmseqs2_homology_cluster(entity_fp: str, threshold: float = 0.3) -> Tuple[Li
     return clusters, accs
 
 def get_labels(identifiers: List[str], labels_name: str = 'label') -> List[str]:
-    labels = []
+
+    label_ids = []
+    label_dict = {}
+    label_count = 0
+
     for ident in identifiers:
 
         spl = ident.strip().split('|')
@@ -99,9 +103,13 @@ def get_labels(identifiers: List[str], labels_name: str = 'label') -> List[str]:
                 if param_spl[0] == labels_name:
                     label = str(param_spl[1].strip())
 
-        labels.append(label)
+        if label not in label_dict:
+            label_dict[label]  = label_count
+            label_count += 1
+        
+        label_ids.append(label_dict[label])
 
-    return labels
+    return label_ids
 
 
 def main() -> None:
@@ -115,9 +123,10 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    cluster_ids, acc_ids =  mmseqs2_homology_cluster(args.fasta_file, args.threshold)
+    cluster_ids, identifiers =  mmseqs2_homology_cluster(args.fasta_file, args.threshold)
 
-    labels =  get_labels(args.fasta_file, args.labels_name)
+    labels =  get_labels(identifiers, args.labels_name)
+    acc_ids = [x.split('|')[0] for x in identifiers]
 
     
     # partition the data.
@@ -125,7 +134,6 @@ def main() -> None:
     labels = np.array(labels)
     dummy_kingdoms = np.zeros_like(labels)
     cl_number = partition_assignment(cluster_ids, dummy_kingdoms, labels, args.partitions, len(np.unique(labels)), 1)
-
 
 
     with open(args.out_file, 'w') as f:

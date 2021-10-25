@@ -69,8 +69,10 @@ def parse_clustering(fpath) -> Tuple[List[str], List[str]]:
             if line.startswith('>'):
                 current_cluster += 1
             else:
-                header = line.strip().split(' ')[-2]
-                acc = header.split('|')[0].lstrip('>')
+                spl = line.strip().split(' ')
+                for s in spl:
+                    if s.startswith('>'):
+                        acc = s.split('|')[0].lstrip('>')
 
                 clusters.append(current_cluster)
                 accs.append(acc)
@@ -82,6 +84,8 @@ def parse_clustering(fpath) -> Tuple[List[str], List[str]]:
 def get_labels(fasta_file: str, labels_name: str = 'label') -> Dict[str, str]:
     
     labels = {}
+    label_id_dict = {}
+    label_count = 0
     with open(fasta_file, 'r') as f:
         for line in f:
             spl = line.strip().split('|')
@@ -93,6 +97,13 @@ def get_labels(fasta_file: str, labels_name: str = 'label') -> Dict[str, str]:
                     if param_spl[0] == labels_name:
                         label = str(param_spl[1].strip())
 
+            # convert to integers.
+            if label not in label_id_dict:
+                label_id_dict[label]  = label_count
+                label_count += 1
+            
+            labels[acc] = label_id_dict[label]
+            
             labels[acc] = label
 
     return labels
