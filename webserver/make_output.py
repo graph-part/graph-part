@@ -8,7 +8,7 @@ from tabulate import tabulate
 import matplotlib.pyplot as plt
 import datetime
 
-results = json.load(open("output/graphpart_report.json","r"))
+results = json.load(open("output/graphpart_result_report.json","r"))
 
 
 def make_progress_plot(df, threshold, out_name):
