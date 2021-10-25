@@ -88,23 +88,23 @@ def get_labels(fasta_file: str, labels_name: str = 'label') -> Dict[str, str]:
     label_count = 0
     with open(fasta_file, 'r') as f:
         for line in f:
-            spl = line.strip().split('|')
-            acc = spl[0].lstrip('>')
-            label = '0'
-            for s in spl[1:]:
-                if '=' in s:
-                    param_spl = s.split('=')
-                    if param_spl[0] == labels_name:
-                        label = str(param_spl[1].strip())
+            if line.startswith('>'):
+                spl = line.strip().split('|')
+                acc = spl[0].lstrip('>')
+                label = '0'
+                for s in spl[1:]:
+                    if '=' in s:
+                        param_spl = s.split('=')
+                        if param_spl[0] == labels_name:
+                            label = str(param_spl[1].strip())
 
-            # convert to integers.
-            if label not in label_id_dict:
-                label_id_dict[label]  = label_count
-                label_count += 1
+                # convert to integers.
+                if label not in label_id_dict:
+                    label_id_dict[label]  = label_count
+                    label_count += 1
+                
+                labels[acc] = label_id_dict[label]
             
-            labels[acc] = label_id_dict[label]
-            
-            labels[acc] = label
 
     return labels
 
