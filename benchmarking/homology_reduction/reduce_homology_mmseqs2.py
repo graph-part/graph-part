@@ -11,13 +11,13 @@ def mmseqs2_homology_reduce(entity_fp: str, threshold: float = 0.3)-> List[str]:
 
     out_prefix = 'reduction_result'
     temp_path = 'mmseqs_temp'
-    os.makedirs(temp_path)
+    os.makedirs(temp_path, exist_ok=True)
 
-    subprocess.run(['mmseqs', 'easy-cluster', '--min-seq-id', threshold, entity_fp, out_prefix, temp_path])
+    subprocess.run(['mmseqs', 'easy-cluster', '--min-seq-id', str(threshold), entity_fp, out_prefix, temp_path])
     shutil.rmtree(temp_path)
 
     representatives = []
-    with open(f'{out_prefix}_cluster') as f:
+    with open(f'{out_prefix}_cluster.tsv') as f:
         for line_nr, line in enumerate(f):
             spl = line.strip().split('\t')
 
@@ -28,7 +28,7 @@ def mmseqs2_homology_reduce(entity_fp: str, threshold: float = 0.3)-> List[str]:
         if 'mm_seqs_temp' in x:
             os.remove(x)
 
-    return representatives
+    return list(set(representatives))
 
 
 def get_labels(identifiers: List[str], labels_name: str = 'label') -> List[str]:
@@ -43,7 +43,7 @@ def get_labels(identifiers: List[str], labels_name: str = 'label') -> List[str]:
                 if param_spl[0] == labels_name:
                     label = str(param_spl[1].strip())
 
-            labels.append(label)
+        labels.append(label)
 
     return labels
 
@@ -61,7 +61,7 @@ def main() -> None:
     representatives =  mmseqs2_homology_reduce(args.fasta_file, args.threshold)
 
     labels =  get_labels(representatives, args.labels_name)
-    accs =  representatives.split('|')[0]
+    accs =  [x.split('|')[0] for x in representatives]
 
     kfold = StratifiedKFold(n_splits=args.partitions)
     folds = []

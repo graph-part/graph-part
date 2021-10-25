@@ -56,9 +56,9 @@ def cdhit_homology_reduce(entity_fp: str, threshold: float = 0.3, is_nucleotide:
         word_size = '5'
 
     if is_nucleotide:
-        subprocess.run(['cd-hit-est', '-i', entity_fp, '-o', out_prefix , '-c', threshold, '-n', word_size, '-T', '0' ])
+        subprocess.run(['cd-hit-est', '-i', entity_fp, '-o', out_prefix , '-c', str(threshold), '-n', word_size, '-T', '0' ])
     else:
-        subprocess.run(['cd-hit', '-i', entity_fp, '-o', out_prefix , '-c', threshold, '-n', word_size, '-T', '0' ])
+        subprocess.run(['cd-hit', '-i', entity_fp, '-o', out_prefix , '-c', str(threshold), '-n', word_size, '-T', '0' ])
 
     representatives = []
     with open('reduction_result') as f:
@@ -71,7 +71,7 @@ def cdhit_homology_reduce(entity_fp: str, threshold: float = 0.3, is_nucleotide:
         if 'reduction_result' in x:
             os.remove(x)
 
-    return representatives
+    return list(set(representatives))
 
 
 def get_labels(identifiers: List[str], labels_name: str = 'label') -> List[str]:
@@ -86,7 +86,7 @@ def get_labels(identifiers: List[str], labels_name: str = 'label') -> List[str]:
                 if param_spl[0] == labels_name:
                     label = str(param_spl[1].strip())
 
-            labels.append(label)
+        labels.append(label)
 
     return labels
 
@@ -104,7 +104,7 @@ def main() -> None:
     representatives =  cdhit_homology_reduce(args.fasta_file, args.threshold)
 
     labels =  get_labels(representatives, args.labels_name)
-    accs =  representatives.split('|')[0]
+    accs =  [x.split('|')[0] for x in representatives]
 
     kfold = StratifiedKFold(n_splits=args.partitions)
     folds = []
