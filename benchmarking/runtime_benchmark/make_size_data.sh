@@ -29,6 +29,7 @@ sed "s/>/>${PREFIX}/" source.fasta >extension_${PREFIX}.fasta
 done
 
 cat extension* >source.fasta
+cat source.fasta  | paste - - >source.tsv
 
 
 for NUMBER in 35000 40000 45000 50000 55000 65000 70000 75000 80000 85000 90000 95000 100000
@@ -36,5 +37,5 @@ do
 shuf -n $NUMBER source.tsv | sed 's/\t/\n/' > "${NUMBER}_seqs.fasta"
 done
 
-
+rm extension*
 rm source*
