@@ -7,7 +7,7 @@ our $script_name = $0;
 our $script_dir = $0;
    $script_dir =~ s/[^\/]+$//;
    $script_dir = "./" unless ($script_dir);
-require "$script_dir/psi-cd-hit-local.pl";
+require "$script_dir/psi_cd_hit_local.pl";
 
 parse_para_etc(@ARGV);
 open_LOG();

@@ -25,7 +25,7 @@ def mmseqs2_homology_reduce(entity_fp: str, threshold: float = 0.3)-> List[str]:
             representatives.append(rep)
 
     for x in os.listdir():
-        if 'mm_seqs_temp' in x:
+        if 'reduction_result' in x:
             os.remove(x)
 
     return list(set(representatives))

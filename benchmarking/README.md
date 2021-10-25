@@ -37,9 +37,14 @@ wget http://ftp.ebi.ac.uk/pub/databases/Rfam/14.6/fasta_files/RF00001.fa.gz
 
 
 ## Install additional dependencies
+
 ```
+pip install scikit-learn
 conda install -c conda-forge -c bioconda mmseqs2
 conda install -c bioconda cd-hit
+conda install -c bioconda blast
+chmod + x baselines/psi_cd_hit.pl
+chmod + x baselines/psi_cd_hit_local.pl
 ```
 
 
