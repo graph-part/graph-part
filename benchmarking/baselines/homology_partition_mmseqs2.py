@@ -54,13 +54,13 @@ def partition_assignment(cluster_vector : np.array, kingdom_vector: np.array, la
     return cl_number
 
 
-def mmseqs2_homology_cluster(entity_fp: str, threshold: float = 0.3) -> Tuple[List[int], List[str]]:
+def mmseqs2_homology_cluster(entity_fp: str, threshold: float = 0.3, cluster_mode: int = 0, seq_id_mode: int = 0) -> Tuple[List[int], List[str]]:
 
     out_prefix = 'reduction_result'
     temp_path = 'mmseqs_temp'
     os.makedirs(temp_path, exist_ok=True)
 
-    subprocess.run(['mmseqs', 'easy-cluster', '--min-seq-id', str(threshold), entity_fp, out_prefix, temp_path])
+    subprocess.run(['mmseqs', 'easy-cluster', '--min-seq-id', str(threshold), '--seq-id-mode', str(seq_id_mode), '--cluster-mode', str(cluster_mode), entity_fp, out_prefix, temp_path])
     shutil.rmtree(temp_path)
 
     accs = []
@@ -121,9 +121,13 @@ def main() -> None:
     parser.add_argument('-th', '--threshold', type=float, default = 0.3)
     parser.add_argument('-pa', '--partitions', type=int, default=5)
 
+
+    parser.add_argument('--cluster-mode', type=int, default=0)
+    parser.add_argument('--seq-id-mode', type=int, default=0)
+
     args = parser.parse_args()
 
-    cluster_ids, identifiers =  mmseqs2_homology_cluster(args.fasta_file, args.threshold)
+    cluster_ids, identifiers =  mmseqs2_homology_cluster(args.fasta_file, args.threshold, args.cluster_mode, args.seq_id_mode)
 
     labels =  get_labels(identifiers, args.labels_name)
     acc_ids = [x.split('|')[0] for x in identifiers]

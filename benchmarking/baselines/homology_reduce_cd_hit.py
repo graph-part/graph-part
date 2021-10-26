@@ -14,11 +14,10 @@ def psicdhit_homology_reduce(entity_fp: str, threshold: float = 0.3)-> List[str]
 
     out_prefix = 'reduction_result'
    
-    subprocess.run(['cd-hit', '-i', entity_fp, '-o', 'pre_reduced_1' , '-c', '0.9', '-n', '5', '-T', '0' ])
-    subprocess.run(['cd-hit', '-i', 'pre_reduced_1', '-o', 'pre_reduced_2' , '-c', '0.6', '-n', '4', '-T', '0' ]) #1792
+    subprocess.run(['cd-hit', '-i', entity_fp, '-o', 'pre_reduced_1' , '-c', '0.9', '-n', '5', '-T', '0', '-g', '1' ])
+    subprocess.run(['cd-hit', '-i', 'pre_reduced_1', '-o', 'pre_reduced_2' , '-c', '0.6', '-n', '4', '-T', '0', '-g', '1' ])
 
     psi_path = pathlib.Path(__file__).parent.resolve() / 'psi_cd_hit.pl'
-        #subprocess.run(['perl','-I', psi_path.parent, psi_path,
     subprocess.run(['perl', psi_path, '-i', 'pre_reduced_2', '-o', out_prefix, '-c', str(threshold)])
 
 
