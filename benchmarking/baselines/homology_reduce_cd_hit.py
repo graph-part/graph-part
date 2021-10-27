@@ -104,10 +104,11 @@ def main() -> None:
     parser.add_argument('--labels-name', default=None)
     parser.add_argument('-th', '--threshold', type=float, default = 0.3)
     parser.add_argument('-pa', '--partitions', type=int, default=5)
+    parser.add_argument('-nu', '--nucleotide', action='store_true')
 
     args = parser.parse_args()
 
-    representatives =  cdhit_homology_reduce(args.fasta_file, args.threshold)
+    representatives =  cdhit_homology_reduce(args.fasta_file, args.threshold, args.nucleotide)
 
     labels =  get_labels(representatives, args.labels_name)
     accs =  [x.split('|')[0] for x in representatives]

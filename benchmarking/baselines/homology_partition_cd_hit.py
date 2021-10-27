@@ -7,6 +7,12 @@ from typing import List, Tuple, Dict
 import pathlib
 import numpy as np
 
+# not python 3.9 yet.
+def removesuffix(self: str, suffix: str, /) -> str:
+    if self.endswith(suffix):
+        return self[:-len(suffix)]
+    else:
+        return self[:]
 
 
 def partition_assignment(cluster_vector : np.array, kingdom_vector: np.array, label_vector: np.array, n_partitions: int, n_class: int, n_kingdoms: int) -> np.array:
@@ -73,6 +79,7 @@ def parse_clustering(fpath) -> Tuple[List[str], List[str]]:
                 for s in spl:
                     if s.startswith('>'):
                         acc = s.split('|')[0].lstrip('>')
+                        acc = removesuffix(acc, '...') #CD-HIT adds ... for some reason even when printing everything.
 
                 clusters.append(current_cluster)
                 accs.append(acc)
@@ -108,20 +115,50 @@ def get_labels(fasta_file: str, labels_name: str = 'label') -> Dict[str, str]:
 
     return labels
 
+'''
+Tutorial:
+cd-hit -i nr -o nr80 -c 0.8 -n 5 -d 0 -M 16000 -T 16        # this generate nr80 and nr80.clstr
+cd-hit -i nr80 -o nr60 -c 0.6 -n 4 -d 0 -M 16000 -T 16      # this use nr80 to generate nr60 and nr60.clstr  
+psi-cd-hit.pl -i nr60 -o nr30 -c 0.3                        # this use nr60 to generate nr30 and nr30.clstr  
+clstr_rev.pl nr80.clstr nr60.clstr > nr80-60.clstr          # nr60.clstr only lists sequences from nr80, script clstr_rev.pl add the original sequences 
+                                                            # from nr but not in nr80 into the output file nr80-60.clstr  
+clstr_rev.pl nr80-60.clstr nr30.clstr > nr80-60-30.clstr    # nr30.clstr only lists sequences from nr60, script clstr_rev.pl add the original sequences 
+                                                            # into file nr80-60-30.clstr
+
+cd-hit -i data/protein/netgpi_dataset.fasta -o pre_reduced_1 -c 0.9 -n 5 -g 1 # 3539 sequences
+cd-hit -i pre_reduced_1 -o pre_reduced_2 -c 0.6 -n 4 -g 1 # 3124 sequences
+perl baselines/psi_cd_hit.pl -i pre_reduced_2 -o pre_reduced_3 -c 0.3 # 2317 sequences
+
+perl baselines/clstr_rev.pl pre_reduced_1.clstr pre_reduced_2.clstr > pre_reduced_12.clstr #3539 sequences
+perl baselines/clstr_rev.pl pre_reduced_12.clstr pre_reduced_3.clstr > pre_reduced_123.clstr #2317 sequences
+
+clstr_rev.pl pre_reduced_1.clstr pre_reduced_2.clstr > pre_reduced_12_combined.clstr #3539 sequences
+clstr_rev.pl pre_reduced_12_combined.clstr pre_reduced_3.clstr > preduction_result.clstr # 2317 sequences
+
+clstr_rev.pl pre_reduced_3.clstr pre_reduced_12_combined.clstr > preduction_result.clstr # 3539 sequences
+'''
+
 
 def psicdhit_homology_cluster(entity_fp: str, threshold: float = 0.3) -> Tuple[List[int], List[str]]:
 
-    out_prefix = 'reduction_result'
+    out_file = 'reduction_result.clstr'
    
-    subprocess.run(['cd-hit', '-i', entity_fp, '-o', 'pre_reduced_1' , '-c', '0.9', '-n', '5', '-T', '0' ])
-    subprocess.run(['cd-hit', '-i', 'pre_reduced_1', '-o', 'pre_reduced_2' , '-c', '0.6', '-n', '4', '-T', '0' ]) #1792
+    subprocess.run(['cd-hit', '-i', entity_fp, '-o', 'pre_reduced_1' , '-c', '0.9', '-n', '5', '-T', '0', '-g', '1', '-d', '0' ])
+    subprocess.run(['cd-hit', '-i', 'pre_reduced_1', '-o', 'pre_reduced_2' , '-c', '0.6', '-n', '4', '-T', '0', '-g', '1', '-d', '0'])
 
     psi_path = pathlib.Path(__file__).parent.resolve() / 'psi_cd_hit.pl'
-        #subprocess.run(['perl','-I', psi_path.parent, psi_path,
-    subprocess.run(['perl', psi_path, '-i', 'pre_reduced_2', '-o', out_prefix, '-c', str(threshold)])
 
+    subprocess.run(['perl', psi_path, '-i', 'pre_reduced_2', '-o', 'pre_reduced_3', '-c', str(threshold)])
 
-    clusters, accs = parse_clustering('reduction_result.clstr')
+    clstr_rev_path = pathlib.Path(__file__).parent.resolve() / 'clstr_rev.pl'    
+
+    with open('pre_reduced_12_combined.clstr', 'w') as f:
+        subprocess.run(['perl', clstr_rev_path, 'pre_reduced_1.clstr', 'pre_reduced_2.clstr'], stdout=f)
+    
+    with open('reduction_resul.clstr', 'w') as f:
+        subprocess.run(['perl', clstr_rev_path, 'pre_reduced_12_combined.clstr', 'pre_reduced_3.clstr'], stdout=f)
+
+    clusters, accs = parse_clustering('reduction_resul.clstr')
     
     for x in os.listdir():
         if 'reduction_result' in x:
@@ -129,11 +166,11 @@ def psicdhit_homology_cluster(entity_fp: str, threshold: float = 0.3) -> Tuple[L
                 shutil.rmtree(x)
             else:
                 os.remove(x)
-        elif 'pre_reduced' in x:
-            if os.path.isdir(x):
-                shutil.rmtree(x)
-            else:
-                os.remove(x)
+        #elif 'pre_reduced' in x:
+        #    if os.path.isdir(x):
+        #        shutil.rmtree(x)
+        #    else:
+        #        os.remove(x)
 
     return clusters, accs
 
@@ -157,9 +194,9 @@ def cdhit_homology_cluster(entity_fp: str, threshold: float = 0.3, is_nucleotide
         word_size = '5'
 
     if is_nucleotide:
-        subprocess.run(['cd-hit-est', '-i', entity_fp, '-o', out_prefix , '-c', str(threshold), '-n', word_size, '-T', '0' ])
+        subprocess.run(['cd-hit-est', '-i', entity_fp, '-o', out_prefix , '-c', str(threshold), '-n', word_size, '-T', '0', '-d', '0', '-g', '1' ])
     else:
-        subprocess.run(['cd-hit', '-i', entity_fp, '-o', out_prefix , '-c', str(threshold), '-n', word_size, '-T', '0' ])
+        subprocess.run(['cd-hit', '-i', entity_fp, '-o', out_prefix , '-c', str(threshold), '-n', word_size, '-T', '0', '-d', '0', '-g', '1'])
 
     representatives = []
     with open('reduction_result') as f:
@@ -189,10 +226,11 @@ def main() -> None:
     parser.add_argument('--labels-name', default=None)
     parser.add_argument('-th', '--threshold', type=float, default = 0.3)
     parser.add_argument('-pa', '--partitions', type=int, default=5)
+    parser.add_argument('-nu', '--nucleotide', action='store_true')
 
     args = parser.parse_args()
 
-    cluster_ids, acc_ids =  cdhit_homology_cluster(args.fasta_file, args.threshold)
+    cluster_ids, acc_ids =  cdhit_homology_cluster(args.fasta_file, args.threshold, args.nucleotide)
 
     labels_dict =  get_labels(args.fasta_file, args.labels_name)
 
