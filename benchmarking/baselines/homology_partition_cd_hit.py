@@ -155,10 +155,10 @@ def psicdhit_homology_cluster(entity_fp: str, threshold: float = 0.3) -> Tuple[L
     with open('pre_reduced_12_combined.clstr', 'w') as f:
         subprocess.run(['perl', clstr_rev_path, 'pre_reduced_1.clstr', 'pre_reduced_2.clstr'], stdout=f)
     
-    with open('reduction_resul.clstr', 'w') as f:
+    with open('reduction_result.clstr', 'w') as f:
         subprocess.run(['perl', clstr_rev_path, 'pre_reduced_12_combined.clstr', 'pre_reduced_3.clstr'], stdout=f)
 
-    clusters, accs = parse_clustering('reduction_resul.clstr')
+    clusters, accs = parse_clustering('reduction_result.clstr')
     
     for x in os.listdir():
         if 'reduction_result' in x:
@@ -166,11 +166,11 @@ def psicdhit_homology_cluster(entity_fp: str, threshold: float = 0.3) -> Tuple[L
                 shutil.rmtree(x)
             else:
                 os.remove(x)
-        #elif 'pre_reduced' in x:
-        #    if os.path.isdir(x):
-        #        shutil.rmtree(x)
-        #    else:
-        #        os.remove(x)
+        elif 'pre_reduced' in x:
+            if os.path.isdir(x):
+                shutil.rmtree(x)
+            else:
+                os.remove(x)
 
     return clusters, accs
 
