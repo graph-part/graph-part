@@ -6,6 +6,7 @@ import argparse
 import subprocess
 import os
 import pandas as pd
+from tqdm import tqdm
 from typing import List, Dict, Tuple
 from itertools import groupby
 import concurrent.futures
@@ -55,6 +56,7 @@ def compute_edges(query_fp: str,
                   library_fp: str,
                   results_dict: Dict[str, Tuple[float, str]], 
                   seq_lens: Dict[str,int],
+                  pbar: tqdm,
                   denominator = 'full',
                   delimiter: str = '|',
                   is_nucleotide: bool = False,
@@ -86,7 +88,7 @@ def compute_edges(query_fp: str,
     if endweight:
         command = command + ["-endweight"]
 
-    import subprocess
+    count = 0
     with subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
@@ -105,7 +107,11 @@ def compute_edges(query_fp: str,
                 identity_line = line
 
             elif line.startswith('# Gaps:'):
-
+                
+                count += 1
+                if count == 100:
+                    pbar.update(100)
+                    count = 0
                 # Gaps:           0/142 ( 0.0%)
                 gaps, rest = line[7:].split('/')
                 gaps = int(gaps)
@@ -157,11 +163,16 @@ def align_partitions(fasta_file: str,
     any other partition.
     '''
     # Make partition files.
+    print('Writing temporary fasta files...')
     n_partitions, seq_lens = partition_fasta_file(fasta_file, partition_file)
 
     results_dict = {} # Acc: [max_id, Acc]
 
+    part_size = len(seq_lens) // n_partitions
+    print('Aligning all partitions...')
+    pbar = tqdm(total=part_size*part_size*n_partitions*n_partitions - n_partitions) #inner complexity x nested for loops.
     jobs = []
+    
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_procs) as executor:
         for query_partition in range(n_partitions):
             for lib_partition in range(n_partitions):
@@ -170,7 +181,7 @@ def align_partitions(fasta_file: str,
                 else:
                     q = f'partition_{query_partition}.fasta.tmp'
                     l = f'partition_{lib_partition}.fasta.tmp'
-                    future = executor.submit(compute_edges, q, l, results_dict, seq_lens, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)
+                    future = executor.submit(compute_edges, q, l, results_dict, seq_lens, pbar, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)
                     jobs.append(future)
 
 
