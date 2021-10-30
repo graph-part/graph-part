@@ -10,7 +10,7 @@ from tqdm import tqdm
 from typing import List, Dict, Tuple
 from itertools import groupby
 import concurrent.futures
-
+import math
 
 NORMALIZATIONS = {'shortest': lambda a,b,c: a/min(b,c), # a identity b len(seq1) c len(seq2)
                   'longest': lambda a,b,c: a/max(b,c),
@@ -51,6 +51,45 @@ def partition_fasta_file(fasta_file: str, partition_file: str, sep='|') -> Tuple
                 f.write(seq_dict[acc_id]+'\n')
     return idx + 1, seq_lens
 
+
+def chunk_fasta_file(fasta_file: str, n_chunks: int, prefix: str = 'chunk', sep: str = '|') -> int:
+    '''
+    Break up fasta file into multiple smaller files that can be
+    used for multiprocessing.
+    Returns the number of generated chunks.
+    '''
+
+    
+
+    # read fasta
+    ids = []
+    seqs = []
+    with open(fasta_file, 'r') as f:
+
+        id_seq_groups = (group for group in groupby(f, lambda line: line.startswith(">")))
+        for is_id, id_iter in id_seq_groups:
+            if is_id: # Only needed to find first id line, always True thereafter
+                ids.append(next(id_iter).strip().split(sep)[0])
+                seqs.append("".join(seq.strip() for seq in next(id_seq_groups)[1]))
+
+
+    chunk_size = math.ceil(len(ids)/n_chunks)
+    empty_chunks = 0
+    for i in range(n_chunks):
+        # because of ceil() we sometimes make less partitions than specified.
+        if i*chunk_size>=len(ids):
+            empty_chunks +=1
+            continue
+
+        chunk_ids = ids[i*chunk_size:(i+1)*chunk_size]
+        chunk_seqs = seqs[i*chunk_size:(i+1)*chunk_size]
+
+        with open(f'{prefix}_{i}.fasta.tmp', 'w') as f:
+            for id, seq in zip(chunk_ids, chunk_seqs):
+                f.write(id+'\n')
+                f.write(seq+'\n')
+
+    return n_chunks - empty_chunks
 
 def compute_edges(query_fp: str,
                   library_fp: str,
@@ -109,8 +148,8 @@ def compute_edges(query_fp: str,
             elif line.startswith('# Gaps:'):
                 
                 count += 1
-                if count == 100:
-                    pbar.update(100)
+                if count == 1000:
+                    pbar.update(1000)
                     count = 0
                 # Gaps:           0/142 ( 0.0%)
                 gaps, rest = line[7:].split('/')
@@ -170,7 +209,9 @@ def align_partitions(fasta_file: str,
 
     part_size = len(seq_lens) // n_partitions
     print('Aligning all partitions...')
-    pbar = tqdm(total=part_size*part_size*n_partitions*n_partitions - n_partitions) #inner complexity x nested for loops.
+    # this is still wrong, we would need to count the actual number of seqs in each partition
+    # like that its just an upper bound.
+    pbar = tqdm(total=part_size*part_size*(n_partitions*n_partitions - n_partitions)) #inner complexity x nested for loops.
     jobs = []
     
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_procs) as executor:
@@ -181,10 +222,19 @@ def align_partitions(fasta_file: str,
                 else:
                     q = f'partition_{query_partition}.fasta.tmp'
                     l = f'partition_{lib_partition}.fasta.tmp'
-                    future = executor.submit(compute_edges, q, l, results_dict, seq_lens, pbar, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)
-                    jobs.append(future)
+
+                    # chunk one of the files to max out threads.
+                    # otherwise, can at max use (n_partitions x n_partitions) - n_partitions threads.
+                    n_chunks = chunk_fasta_file(q, n_chunks=10, prefix=f'chunk_p_{query_partition}')
+                    for i in range(n_chunks):
+                        q_c = f'chunk_p_{query_partition}_{i}.fasta.tmp'
+                        future = executor.submit(compute_edges, q_c, l, results_dict, seq_lens, pbar, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)
+                        jobs.append(future)
 
 
+    for x in os.listdir():
+        if 'chunk_p_' in x:
+                os.remove(x)
 
     for i in range(n_partitions):
         os.remove(f'partition_{i}.fasta.tmp')
