@@ -163,14 +163,14 @@ arguments:
           Fast-NN: fast-nn
     -
         default_value: ''
-        description: Move sequences while removing
+        description: Disable moving
         key: ''
         key_value_separator: ' '
         required: true
         type: toggle
         options:
-            'off': '--no-moving'
-            'on': ''
+            'off': ''
+            'on': '--no-moving'
     -
         default_value: ''
         description: Remove within
