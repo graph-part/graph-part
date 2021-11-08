@@ -91,8 +91,8 @@ Long                    | Short | Description
 `--initialization-mode` |`-im`  | Use either slow or fast restricted nearest neighbor linkage or no initialization. Can be any of `slow-nn`, `fast-nn`, `simple`. Defaults to `slow-nn`.
 `--no-moving`           |`-nm`  | By default, the removing procedure tries to relocate sequences to another partition if it finds more within-threshold neighbours in any. This flag disallows moving.
 `--remove-same`         |`-rs`  | This here is the inverse of removal_type (has default True), not sure what it does TODO
-`--load_checkpoint_path`|`-lc`  | Optional path to save the generated graph. Defaults to `None` with no graph saved.
-`--save_checkpoint_path`|`-sc`  | Optional path to a previously generated graph for quickstart. If provided, no alignment will be performed and all arguments relating to this step are ignored.
+`--load_checkpoint_path`|`-lc`  | Optional path to a previously generated graph for quickstart. If provided, no alignment will be performed and all arguments relating to this step are ignored.
+`--save_checkpoint_path`|`-sc`  | Optional path to save the generated graph. Defaults to `None` with no graph saved.
 
 #### needle
 
