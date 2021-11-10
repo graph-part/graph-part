@@ -1,0 +1,1 @@
+Download from https://github.com/rreybeyb/DeepM6ASeq/tree/master/data
