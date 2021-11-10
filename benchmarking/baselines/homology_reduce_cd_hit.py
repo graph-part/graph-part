@@ -48,7 +48,7 @@ def cdhit_homology_reduce(entity_fp: str, threshold: float = 0.3, is_nucleotide:
 
     if not is_nucleotide and threshold<0.4:
         return psicdhit_homology_reduce(entity_fp, threshold)
-    if is_nucleotide and threshold<0.4:
+    if is_nucleotide and threshold<0.8:
         raise NotImplementedError('Threshold too low for this data type.')
 
     out_prefix = 'reduction_result'
