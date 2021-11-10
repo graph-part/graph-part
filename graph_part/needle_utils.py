@@ -195,6 +195,7 @@ def compute_edges(query_fp: str,
                   threshold: float,
                   seq_lens: Dict[str,int],
                   progress_bar: tqdm,
+                  progress_bar_update_interval: int = 1000,
                   denominator = 'full',
                   delimiter: str = '|',
                   is_nucleotide: bool = False,
@@ -226,6 +227,7 @@ def compute_edges(query_fp: str,
     if endweight:
         command = command + ["-endweight"]
 
+    count = 0
     import subprocess
     with subprocess.Popen(
             command,
@@ -247,7 +249,10 @@ def compute_edges(query_fp: str,
             #TODO gaps is only reported after the identity...
             elif line.startswith('# Gaps:'):
 
-                progress_bar.update(1)
+                count += 1
+                if count == progress_bar_update_interval:
+                    progress_bar.update(progress_bar_update_interval)
+                    count = 0
 
                 # Gaps:           0/142 ( 0.0%)
                 gaps, rest = line[7:].split('/')
@@ -336,6 +341,15 @@ def generate_edges_mp(entity_fp: str,
     else:
         n_alignments = len(ids)*len(ids)
 
+    # define in which interval each thread updates the progress bar.
+    # if all update all the time, this would slow down the loop and make runtimes estimate unstable.
+    # update every 0.05% of the total, divided by number of procs. 
+    # this worked well on large datasets with 64 threads - fewer threads should then be unproblematic.
+    pbar_update_interval = int((n_alignments * 0.0005)/n_procs) 
+    print(pbar_update_interval)
+
+    #progress_update_interval = 1000 # we do this manually to work well with multithreading.
+
     pbar = tqdm(total= n_alignments)
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_procs) as executor:
         for i in range(n_chunks):
@@ -343,7 +357,7 @@ def generate_edges_mp(entity_fp: str,
             for j in range(start, n_chunks):
                 q = f'graphpart_{i}.fasta.tmp'
                 l = f'graphpart_{j}.fasta.tmp'
-                future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold, seq_lens, pbar, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)
+                future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold, seq_lens, pbar, pbar_update_interval, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)
                 jobs.append(future)
 
         # This should force the script to throw exceptions that occured in the threads
