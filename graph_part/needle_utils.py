@@ -343,12 +343,12 @@ def generate_edges_mp(entity_fp: str,
 
     # define in which interval each thread updates the progress bar.
     # if all update all the time, this would slow down the loop and make runtimes estimate unstable.
-    # update every 0.05% of the total, divided by number of procs. 
+    # update every 1000 OR update every 0.05% of the total, divided by number of procs. 
     # this worked well on large datasets with 64 threads - fewer threads should then be unproblematic.
     pbar_update_interval = int((n_alignments * 0.0005)/n_procs) 
-    print(pbar_update_interval)
+    pbar_update_interval = min(1000, pbar_update_interval)
 
-    #progress_update_interval = 1000 # we do this manually to work well with multithreading.
+    progress_update_interval = 1000 # we do this manually to work well with multithreading.
 
     pbar = tqdm(total= n_alignments)
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_procs) as executor:
