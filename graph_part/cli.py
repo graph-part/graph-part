@@ -61,8 +61,9 @@ def get_args() -> argparse.Namespace:
                                       of within threshold neighbours in other partitions.'''
                         )
     #checkpointing
-    core_parser.add_argument('--load-checkpoint-path', '-lc', type=str, default=None, help='Path to save the generated graph.')
-    core_parser.add_argument('--save-checkpoint-path', '-sc', type=str, default=None, help='Path to a previously generated graph for quickstart.')
+    core_parser.add_argument('--save-checkpoint-path', '-sc', type=str, default=None, help='''Path to save the computed similarities above the threshold. 
+                                                                                            Can be used later in the precomputed mode.'''
+                        )
 
 
     # Parsers for the different run modes.

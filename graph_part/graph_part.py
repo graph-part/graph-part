@@ -434,16 +434,6 @@ def main():
     json_dict['labels_start'] = labels
 
 
-    ## Get the edges
-    #if args.load_checkpoint_path is not None:
-    #    print('Loading edge weights from previously saved graph. Provided alignment options will be ignored, threshold will be updated.')
-    #    # load from previous checkpoint
-    #    checkpoint_graph = pickle.load(full_graph, open(args.load_checkpoint_path+'.pickle', 'rb'))
-    #    # filter edges to match defined threshold - need not be the same as when checkpoint was saved.
-    #    for qry, lib, data in checkpoint_graph.edges(data=True):
-    #        if data['metric'] > threshold:
-    #            full_graph.add_edge(qry, lib, metric=data['metric'])
-
     if args.alignment_mode == 'precomputed':
         from .precomputed_utils import load_edge_list
         print('Parsing edge list.')

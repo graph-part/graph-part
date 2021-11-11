@@ -91,8 +91,7 @@ Long                    | Short | Description
 `--initialization-mode` |`-im`  | Use either slow or fast restricted nearest neighbor linkage or no initialization. Can be any of `slow-nn`, `fast-nn`, `simple`. Defaults to `slow-nn`.
 `--no-moving`           |`-nm`  | By default, the removing procedure tries to relocate sequences to another partition if it finds more within-threshold neighbours in any. This flag disallows moving.
 `--remove-same`         |`-rs`  | This here is the inverse of removal_type (has default True), not sure what it does TODO
-`--load_checkpoint_path`|`-lc`  | Optional path to a previously generated graph for quickstart. If provided, no alignment will be performed and all arguments relating to this step are ignored.
-`--save_checkpoint_path`|`-sc`  | Optional path to save the generated graph. Defaults to `None` with no graph saved.
+`--save_checkpoint_path`|`-sc`  | Optional path to save the computed identities above the chosen threshold as an edge list. Can be used to quickstart runs in the `precomputed` mode. Defaults to `None` with no file saved.
 
 #### needle
 
@@ -132,6 +131,8 @@ WIP
 - **How should I pick `chunks` ?**  
 `chunks` should be picked so that all `threads` are utilized. Each chunk is aligned to each other chunk, so `threads` <= `chunks`*`chunks` results in full utilization.
 
-- **I want to test multiple thresholds - How can I do this efficiently ?**  
-When constructing the graph, we only retain distances that are smaller than the selected `threshold`, as only those form relevant edges for partitioning the data. All other distances are discarded as they are computed. To test multiple thresholds, the most efficient way is to first try the highest threshold to be considered (when working with sequence identities, this means the lowest sequence identity) and activate checkpointing of the graph by specifiying `--save-checkpoint-path`. In the next run, use `--load-checkpoint-path` to start from your saved graph and avoid recomputing the edges. 
+- **I want to test multiple thresholds and partitioning parameters - How can I do this efficiently ?**  
+
+When constructing the graph, we only retain identities that are larger than the selected `threshold`, as only those form relevant edges for partitioning the data. All other similarities are discarded as they are computed. To test multiple thresholds, the most efficient way is to first try the lowest threshold to be considered and save the edge list by specifying `--save-checkpoint-path EDGELIST.csv`. In the next run, use `graph-part precomputed -ef EDGELIST.csv` to start directly from the previous alignment result.
+
 
