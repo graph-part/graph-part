@@ -435,16 +435,16 @@ def main():
 
 
     ## Get the edges
-    if args.load_checkpoint_path is not None:
-        print('Loading edge weights from previously saved graph. Provided alignment options will be ignored, threshold will be updated.')
-        # load from previous checkpoint
-        checkpoint_graph = pickle.load(full_graph, open(args.load_checkpoint_path+'.pickle', 'rb'))
-        # filter edges to match defined threshold - need not be the same as when checkpoint was saved.
-        for qry, lib, data in checkpoint_graph.edges(data=True):
-            if data['metric'] > threshold:
-                full_graph.add_edge(qry, lib, metric=data['metric'])
+    #if args.load_checkpoint_path is not None:
+    #    print('Loading edge weights from previously saved graph. Provided alignment options will be ignored, threshold will be updated.')
+    #    # load from previous checkpoint
+    #    checkpoint_graph = pickle.load(full_graph, open(args.load_checkpoint_path+'.pickle', 'rb'))
+    #    # filter edges to match defined threshold - need not be the same as when checkpoint was saved.
+    #    for qry, lib, data in checkpoint_graph.edges(data=True):
+    #        if data['metric'] > threshold:
+    #            full_graph.add_edge(qry, lib, metric=data['metric'])
 
-    elif args.alignment_mode == 'precomputed':
+    if args.alignment_mode == 'precomputed':
         from .precomputed_utils import load_edge_list
         print('Parsing edge list.')
         load_edge_list(args.edge_file, full_graph, args.transformation, threshold, args.metric_column)
@@ -484,8 +484,15 @@ def main():
     json_dict['time_edges_complete'] = time.perf_counter()
 
     if args.save_checkpoint_path is not None:
-        import pickle
-        pickle.dump(full_graph, open(args.save_checkpoint_path+'.pickle', 'wb'))
+        from .transformations import INVERSE_TRANSFORMATIONS
+
+        with open(args.save_checkpoint_path, 'w') as f:
+            for qry, lib, data in full_graph.edges(data=True):
+                # we save the original metric. not the one that we transformed. So revert transformation.
+                score = INVERSE_TRANSFORMATIONS[args.transformation](data['metric'])
+                f.write(qry+ ',' + lib +',' + str(score) +'\n')
+
+
     
     ## Finally, let's partition this
     partition_data(full_graph, part_graph, labels, threshold, args.partitions, args.initialization_mode)

@@ -83,7 +83,7 @@ def get_args() -> argparse.Namespace:
                                                             from left-to-right, specifying which column
                                                             in --edge-file contains the desired metric.
                                                             Left unspecified this is assumed to be 2.''', 
-                        default=3,
+                        default=2,
                         )
 
     # 3. Arguments that are only required with needleall.
