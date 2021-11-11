@@ -118,23 +118,5 @@ def get_args() -> argparse.Namespace:
 
     args =  parser.parse_args()
 
-    ## Validate argument combinations.
-    #TODO rather make those warnings
-    if args.load_checkpoint_path is not None:
-        print('Starting from precomputed checkpoint, alignment mode options will be ignored.')
-
-
-    # prevent unintentional overwriting of previous graph. Can be very expensive to recompute for large datasets
-    if args.load_checkpoint_path is not None and (args.load_checkpoint_path == args.save_checkpoint_path): 
-        print(f'load-checkpoint-path and save-checkpoint-path are identical! This would overwrite the currently saved graph with a new one thresholded at {args.threshold}')
-        print('Please confirm with y to continue, n to abort:')
-
-        res = ''
-        while res not in {"y", "n"}:
-            res = input("(Enter y/n)").lower()
-        
-        if res == 'n':
-            exit()
-        
-    
+            
     return args
