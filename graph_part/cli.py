@@ -2,6 +2,7 @@
 Command line interface for Graph-Part.
 '''
 import argparse
+import os
 from .transformations import TRANSFORMATIONS
 
 #TODO check all help strings and update if needed
@@ -118,5 +119,24 @@ def get_args() -> argparse.Namespace:
 
     args =  parser.parse_args()
 
+
+    # Perform checks
+    def create_dir_or_fail(file_path: str) -> None:
+        '''Create output dirs or fail if not possible. If no dir, check that current working dir is writeable or fail.'''
+
+        out_path = os.path.dirname(file_path)
+        if out_path != '': # dirname is empty when we just have a filename.
+            if not os.path.exists(out_path):
+                os.makedirs(out_path, exist_ok=True)
+        else:
+            # if we just have a filename, validate that the current working directory is writeable.
+            if not os.access(os.getcwd(), os.W_OK):
+                raise PermissionError(file_path)
+
+
+    create_dir_or_fail(args.out_file)
+    if args.save_checkpoint_path is not None:
+        create_dir_or_fail(args.save_checkpoint_path)
+    
             
     return args
