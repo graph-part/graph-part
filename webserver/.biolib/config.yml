@@ -164,6 +164,7 @@ arguments:
     -
         default_value: ''
         description: Disable moving
+        required: false
         key: ''
         key_value_separator: ' '
         type: toggle
