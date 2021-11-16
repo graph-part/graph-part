@@ -127,3 +127,52 @@ def train_val_test_split(part_graph: nx.classes.graph.Graph,
         else:
             nx.set_node_attributes(part_graph, {n:val_attributes})
 
+
+
+# Not used.
+def find_best_partition_combinations_heuristic(partition_connections: np.ndarray, n_train: int, n_test: int):
+    '''
+    Brute force try combinations of partitions to find the set of partitions that have the maximum connections to each other.
+    This here still tries a lot, but is not exhaustive. 
+    Version above: O(min(n^k, n^(n-k)))
+    This:        : O(n*n*k)
+    As long as we have 10 or 20 partitions, n choose k is fine. This works too, but untested for larger n.
+    '''
+    # 1. Get train partitions
+    best_combination = []
+    best_score = 0
+    current_score = 0
+    
+    # Try each partition as the starting point. complexity n*n*k
+    for partition_id in range(partition_connections.shape[0]): # complexity n
+        current_combination = []
+        current_combination.append(partition_id)
+        
+        # Add partitions to the set until the size is reached.
+        while(len(current_combination)<n_train): #complexity k
+            
+            # find the best partition to add.
+            best_connections = 0
+            best_connected = None
+            for i in range(partition_connections.shape[0]): # complexity n
+                #print('Current', current_combination, 'testing', i, 'best', best_connections)
+                if i in current_combination:
+                   # print('i in current')
+                    continue
+                
+                connections = partition_connections[i, current_combination].sum()
+                #print(f'Connections for {i}: {connections}')
+                if connections > best_connections:
+                    best_connected = i
+                    best_connections = connections
+            
+            current_combination.append(best_connected)
+        
+        # Got a set. Keep if best, else discard.
+        # We double count here (do np.triu to avoid), but it does not matter if we do it for all.
+        current_score = partition_connections[current_combination,:][:,current_combination].sum()
+        if current_score>best_score:
+            best_combination = current_combination
+            best_score = current_score
+        
+    return best_combination
