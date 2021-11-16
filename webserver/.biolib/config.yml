@@ -166,7 +166,6 @@ arguments:
         description: Disable moving
         key: ''
         key_value_separator: ' '
-        required: true
         type: toggle
         options:
             'off': ''
@@ -181,17 +180,30 @@ arguments:
         options:
             'on': '--remove-same'
             'off': ''
-
-
+    -
+        default_value: 0.0
+        description: 'Test ratio (overrides partitions)'
+        key: '--test-ratio'
+        key_value_separator: ' '
+        required: true
+        type: number
+    -
+        default_value: 0.0
+        description: 'Validation ratio (overrides partitions)'
+        key: '--val-ratio'
+        key_value_separator: ' '
+        required: true
+        type: number
+    -
 
 
             
 citation:
     entry_type: article
     author: >-
-        Teufel, Felix and Armenteros, Jose Juan Almagro and Johansen, Alexander Rosenberg and Gislason, Magnus Halldor and Pihl, Silas Irby and Tsirigos, Konstantinos D and Winther, Ole and Brunak, Soren and Von Heijne, Gunnar and Nielsen, Henrik
+        Gislason, Magnus Halldor and Teufel, Felix and Armenteros, Jose Juan Almagro and Nielsen, Henrik
     month: '6'
-    title: SignalP 6.0 achieves signal peptide prediction across all types using protein language models
+    title: Graph-Part
     year: '2021'
     doi: '10.1101/2021.06.09.447770'
     elocation-id: "2021.06.09.447770"
