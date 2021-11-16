@@ -11,6 +11,7 @@ import time
 
 from .transformations import TRANSFORMATIONS
 from .cli import get_args
+from .train_val_test_split import train_val_test_split
 
 #TODO update new arg names here
 """
@@ -486,6 +487,11 @@ def main():
     
     ## Finally, let's partition this
     partition_data(full_graph, part_graph, labels, threshold, args.partitions, args.initialization_mode)
+
+    df, result = display_results(part_graph, full_graph, labels, args.partitions)
+    if args.test_ratio>0:
+        train_val_test_split(part_graph, full_graph, threshold, args.test_ratio, args.val_ratio, args.partitions)
+        setattr(args, 'partitions', 3 if args.val_ratio>0 else 2)
 
     df, result = display_results(part_graph, full_graph, labels, args.partitions)
     df.to_csv(args.out_file + "pre-removal")

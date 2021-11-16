@@ -4,6 +4,7 @@ Command line interface for Graph-Part.
 import argparse
 import os
 from .transformations import TRANSFORMATIONS
+from .train_val_test_split import check_train_val_test_args
 
 #TODO check all help strings and update if needed
 def get_args() -> argparse.Namespace:
@@ -61,6 +62,11 @@ def get_args() -> argparse.Namespace:
                                       in the same partition. The default removes based on the number
                                       of within threshold neighbours in other partitions.'''
                         )
+    
+    # train-val-test splits.
+    core_parser.add_argument("-te","--test-ratio",type=float, default=0.0, help='The fraction of the data to use for testing. Incompatible with `partitions`.')
+    core_parser.add_argument("-va","--val-ratio",type=float, default=0.0,help='The fraction of the data to use for validation. Incompatible with `partitions`.')
+    
     #checkpointing
     core_parser.add_argument('--save-checkpoint-path', '-sc', type=str, default=None, help='''Path to save the computed similarities above the threshold. 
                                                                                             Can be used later in the precomputed mode.'''
@@ -137,6 +143,10 @@ def get_args() -> argparse.Namespace:
     create_dir_or_fail(args.out_file)
     if args.save_checkpoint_path is not None:
         create_dir_or_fail(args.save_checkpoint_path)
+
+    if args.test_ratio >0 or args.val_ratio>0:
+        check_train_val_test_args(args)
+        print(f'Running in train-validation-test split mode with {args.test_ratio:.0%} test and {args.val_ratio:.0%} validation.')
     
             
     return args

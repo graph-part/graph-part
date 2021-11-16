@@ -37,6 +37,11 @@ As an example, this is a basic command for partitioning a dataset at a maximum p
 graphpart needle --fasta-file netgpi_dataset.fasta --threshold 0.3 --out-file graphpart_assignments.csv --labels-name label --partitions 5 --threads 12
 ```
 
+Alternatively, a train-validation-test split of the data can be made instead of folds:
+```
+graphpart needle --fasta-file netgpi_dataset.fasta --threshold 0.3 --out-file graphpart_assignments.csv --labels-name label --test-ratio 0.1 --val-ratio 0.05 --threads 12
+```
+
 
 ## Input format
 Graph-Part works on FASTA files with a custom header format, e.g.
@@ -92,6 +97,8 @@ Long                    | Short | Description
 `--no-moving`           |`-nm`  | By default, the removing procedure tries to relocate sequences to another partition if it finds more within-threshold neighbours in any. This flag disallows moving.
 `--remove-same`         |`-rs`  | This here is the inverse of removal_type (has default True), not sure what it does TODO
 `--save_checkpoint_path`|`-sc`  | Optional path to save the computed identities above the chosen threshold as an edge list. Can be used to quickstart runs in the `precomputed` mode. Defaults to `None` with no file saved.
+`--test-ratio`          | `-te` | Make a train-val-test split instead of partitions for cross-validation. Overrides `--partitions` when specified. Defaults to 0. Needs to be a multiple of 0.05.
+`--val-ratio`           | `-va` |Make a train-val-test split instead of partitions for cross-validation. Overrides `--partitions` when specified. Defaults to 0. Needs to be a multiple of 0.05.
 
 #### needle
 
