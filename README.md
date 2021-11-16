@@ -14,8 +14,9 @@ pip install .
 ## Installation
 
 Graph-Part relies on [needleall](https://www.bioinformatics.nl/cgi-bin/emboss/help/needleall) from the [EMBOSS](http://emboss.sourceforge.net/) package for fast Needleman-Wunsch alignments of sequences. Please refer to the official EMBOSS documentation for installation methods.
+Additionally, Graph-Part can use [MMseqs2](https://github.com/soedinglab/MMseqs2) for alignments.
 
-We recommend to install Graph-Part in a conda environment, and install EMBOSS from [bioconda](https://anaconda.org/bioconda/emboss). 
+We recommend to install Graph-Part in a conda environment, and install EMBOSS from [bioconda](https://anaconda.org/bioconda/emboss). The same goes for [MMseqs2](https://anaconda.org/bioconda/mmseqs2).
 ```
 conda install -c bioconda emboss
 
@@ -54,16 +55,16 @@ MKKYLLGIGLILALIACKQNVSSLDEKNSVSVDLPGEMKVLVSKEKNKDGKYDLIATVDKLELKGTSDKN
 Alternatively , ":" and "&nbsp;-&nbsp;" (note there are spaces on either side of the `-`) can be used as separators instead of "|". It should be taken care that the sequence identifiers themselves contain no separator symbols. The keywords `label` and `priority` can be customized by specifying the `--labels-name` and `--priority-name` arguments. Both elements of the header are optional, Graph-Part can also just partition based on sequences alone, without any class balancing.   
 You can find a script to convert `.csv` datasets into the custom `.fasta` format at [csv_to_fasta.py](csv_to_fasta.py)
 
+## Output format
 
-## TODO
+Graph-Part produces a `.csv` file that contains the cluster assignment for each sequence. Column `cluster` contains the partition number. Removed sequences are not contained in the output file.
+```
+AC,priority,label-val,between_connectivity,cluster
+P42098,False,0,0,0.0
+Q6LEM5,False,0,0,0.0
+Q9JI81,False,0,0,1.0
+```
 
-- Write tool to make fasta from assignments (concatenate assignment to header, seperator of choice)
-- Write tool to make fasta from .csv (specifify spearator, label_col (multiple?) and priority_col)
-- Fix alignment of header in removal output - this seems to happen with large Connectivity values:  
-```
-Min-threshold    #Entities       #Edges          Connectivity    #Problematics   #Relocated      #To-be-removed  
-0.01             3539            411624                  460915                  3517            1856            1  
-```
 
 ## API
 
@@ -76,8 +77,8 @@ graphpart ALIGNMENT_MODE -ff FASTAFILE.fasta -th 0.3
 
 Alignment mode  | Description
 ----------------|----------------------
-`needle`        | Use EMBOSS needleall to compute exact pairwise Needleman-Wunsch identities for all sequences.
-`mmseqs2`       | Use MMseqs2 to compute fast approximate identities. Use with caution for nucleotides, as there it cannot be guaranteed that MMseqs2 computes all pairwise alignments.
+`needle`        | Use EMBOSS needleall to compute exact pairwise global Needleman-Wunsch identities for all sequences.
+`mmseqs2`       | Use MMseqs2 to compute fast identities from local alignments. Use with caution for nucleotides, as there it cannot be guaranteed that MMseqs2 computes all pairwise alignments.
 `precomputed`   | Use a list of precomputed identities or other similarity/distance metrics.
 
 ### Arguments
@@ -87,9 +88,9 @@ Alignment mode  | Description
 Long                    | Short | Description
 ------------------------|-------|------------
 `--fasta-file`          |`-ff`  | Path to the input fasta file, formatted according to [the input format](#Input-format).
-`--out-file`            |`-of`  | Path at which to save the partition assignments as `.csv`
+`--out-file`            |`-of`  | Path at which to save the partition assignments as `.csv`. Defaults to `graphpart_result.csv`.
 `--threshold`           |`-th`  | The desired partitioning threshold, should be within the bounds defined by the metric.
-`--partitions`          |`-pa`  | Number of partitions to generate.
+`--partitions`          |`-pa`  | Number of partitions to generate. Defaults to 5.
 `--transformation`      |`-tf`  | Transformation to apply to the similarity/distance metric. Graph-Part operates on distances, therefore similarity metrics need to be transformed. Can be any of `one-minus`, `inverse`, `square`, `log`, `None`. See the [source](graph_part/transformations.py) for definitions. As an example, when operating with sequence identities ranging from 0 to 1, the transformation `one-minus` yields corresponding distances. Defaults to `one-minus`.
 `--priority-name`       |`-pn`  | The name of the priority in the meta file. TODO what does this do
 `--labels-name`         |`-ln`  | The name of the label in the meta file. Used for balancing partitions.
@@ -143,3 +144,10 @@ WIP
 When constructing the graph, we only retain identities that are larger than the selected `threshold`, as only those form relevant edges for partitioning the data. All other similarities are discarded as they are computed. To test multiple thresholds, the most efficient way is to first try the lowest threshold to be considered and save the edge list by specifying `--save-checkpoint-path EDGELIST.csv`. In the next run, use `graph-part precomputed -ef EDGELIST.csv` to start directly from the previous alignment result.
 
 
+## TODO
+
+- Fix alignment of header in removal output - this seems to happen with large Connectivity values:  
+```
+Min-threshold    #Entities       #Edges          Connectivity    #Problematics   #Relocated      #To-be-removed  
+0.01             3539            411624                  460915                  3517            1856            1  
+```
