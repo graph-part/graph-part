@@ -268,7 +268,7 @@ def remover(full_graph: nx.classes.graph.Graph,
             move_to_most_neighbourly:bool = True, 
             ignore_priority:bool = True,
             simplistic_removal:bool = True,
-            print: bool = True):
+            verbose: bool = True):
 
     if ignore_priority:
         json_dict['removal_step_1'] = {}
@@ -277,7 +277,7 @@ def remover(full_graph: nx.classes.graph.Graph,
         json_dict['removal_step_2'] = {}
         dict_key = 'removal_step_2'
     
-    if print:
+    if verbose:
         print("Min-threshold", "\t", "#Entities", "\t", "#Edges", "\t", "Connectivity", "\t", "#Problematics", "\t", "#Relocated", "\t", "#To-be-removed")
     removing_round = 0
     while True:
@@ -328,7 +328,7 @@ def remover(full_graph: nx.classes.graph.Graph,
         ## Remove 1% + 1 of the most problematic entities
         remove_these = [x[0] for x in sorted(((n,d['between_connectivity']) for n,d in full_graph.nodes(data=True) if d['between_connectivity'] > 0), key=lambda x:x[1], reverse=True)[:number_to_remove]]
         
-        if print:
+        if verbose:
             print(round(min_oc_wth,7), "\t\t", full_graph.number_of_nodes(), "\t\t", full_graph.number_of_edges(), "\t\t", bc_sum, "\t\t", bc_count, "\t\t", number_moved, "\t\t", len(remove_these))
         
         json_dict[dict_key][removing_round] = {
@@ -356,7 +356,7 @@ def display_results(
     full_graph: nx.classes.graph.Graph,
     labels: dict,
     nr_of_parts: int,
-    print: bool = True) -> Tuple[pd.core.frame.DataFrame, pd.core.frame.DataFrame]:
+    verbose: bool = True) -> Tuple[pd.core.frame.DataFrame, pd.core.frame.DataFrame]:
     """ """
     df = pd.DataFrame(((d) for n,d in full_graph.nodes(data=True)))
     df['cluster'] = [part_graph.nodes[n]['cluster'] for n in full_graph.nodes()]
@@ -379,7 +379,7 @@ def display_results(
         result['mean'] = result[list(range(nr_of_parts))].mean(axis=1)
         result['count'] = result[list(range(nr_of_parts))].sum(axis=1)
     
-    if print:
+    if verbose:
         print(result)
         print()
         print("Partitioning score:", score_partitioning(result[range(nr_of_parts)]))
@@ -502,12 +502,12 @@ def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_
     ## Finally, let's partition this
     partition_data(full_graph, part_graph, labels, threshold, config['partitions'], config['initialization_mode'])
 
-    df, result = display_results(part_graph, full_graph, labels, config['partitions'], print=verbose)
+    df, result = display_results(part_graph, full_graph, labels, config['partitions'], verbose=verbose)
     if config['test_ratio']>0:
         train_val_test_split(part_graph, full_graph, threshold, config['test_ratio'], config['val_ratio'], config['partitions'])
         config['partitions'] = 3 if config['val_ratio']>0 else 2
 
-    df, result = display_results(part_graph, full_graph, labels, config['partitions'], print=verbose)
+    df, result = display_results(part_graph, full_graph, labels, config['partitions'], verbose=verbose)
     if write_output_file:
         df.to_csv(config['out_file'] + "pre-removal")
     print('Currently have this many samples:', full_graph.number_of_nodes())
@@ -521,16 +521,16 @@ def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_
     if removal_needed(part_graph, full_graph, threshold):     
         print('Need to remove! Currently have this many samples:', full_graph.number_of_nodes())
 
-        remover(full_graph, part_graph, threshold, json_dict, config['allow_moving'], True, config['removal_type'], print=verbose)    
+        remover(full_graph, part_graph, threshold, json_dict, config['allow_moving'], True, config['removal_type'], verbose=verbose)    
 
     if removal_needed(part_graph, full_graph, threshold):   
         print('Need to remove priority! Currently have this many samples:', full_graph.number_of_nodes())
-        remover(full_graph, part_graph, threshold, json_dict, config['allow_moving'], False, config['removal_type'], print=verbose)    
+        remover(full_graph, part_graph, threshold, json_dict, config['allow_moving'], False, config['removal_type'], verbose=verbose)    
 
     print('After removal we have this many samples:', full_graph.number_of_nodes())
 
 
-    df, result = display_results(part_graph, full_graph, labels, config['partitions'], print=write_output_file)
+    df, result = display_results(part_graph, full_graph, labels, config['partitions'], verbose=write_output_file)
 
     json_dict['partitioning_after_removal'] = result.to_json()
     json_dict['samples_after_removal'] = full_graph.number_of_nodes()
