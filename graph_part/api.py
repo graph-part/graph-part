@@ -183,8 +183,8 @@ def stratified_k_fold(sequences: Union[List[str], np.ndarray, Dict[str,str]],
 
 
 
-def train_test_split(sequences: Union[List[str], np.ndarray, Dict[str,str]], 
-                     stratify: Union[List[str], np.ndarray, Dict[str,str]] = None,
+def train_test_validation_split(sequences: Union[List[str], np.ndarray, Dict[str,str]], 
+                     labels: Union[List[str], np.ndarray, Dict[str,str]] = None,
                      priority: Union[List[str], np.ndarray, Dict[str,str]] = None,
                      test_size: float = 0.15, 
                      valid_size: float = 0,
@@ -256,10 +256,10 @@ def train_test_split(sequences: Union[List[str], np.ndarray, Dict[str,str]],
 
     # Sort out the input formats.
     original_type = type(sequences)
-    sequences, stratify, priority = _convert_to_dict(sequences, stratify, priority)
+    sequences, labels, priority = _convert_to_dict(sequences, labels, priority)
 
     # 2. Write the data to a temporary fasta file for alignment.
-    _write_fasta(sequences, stratify, priority, 'graphpart_api.fasta.tmp')
+    _write_fasta(sequences, labels, priority, 'graphpart_api.fasta.tmp')
 
     config = {
         "alignment_mode": alignment_mode,
@@ -269,7 +269,7 @@ def train_test_split(sequences: Union[List[str], np.ndarray, Dict[str,str]],
         "transformation": transformation,
         "out_file": "graphpart_python", # not used anyway
         "priority_name": "priority" if priority is not None else None,
-        "labels_name": "label" if stratify is not None else None,
+        "labels_name": "label" if labels is not None else None,
         "initialization_mode": initialization_mode,
         "no_moving": no_moving,
         "remove_same": remove_same,

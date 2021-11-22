@@ -417,12 +417,13 @@ def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_
     json_dict['time_script_start'] = s
     json_dict['config'] = config
 
-    try:
-        with open(config['out_file'], 'w+') as outf:
-            pass
-    except:
-        raise ValueError("Output file path (-of/--out-file) improper or nonexistent.") 
-    
+    if write_output_file:
+        try:
+            with open(config['out_file'], 'w+') as outf:
+                pass
+        except:
+            raise ValueError("Output file path (-of/--out-file) improper or nonexistent.") 
+        
     threshold = TRANSFORMATIONS[config['transformation']](config['threshold'])
     json_dict['config']['threshold_transformed'] = threshold
 
