@@ -3,7 +3,7 @@ import os
 import shutil
 from .transformations import TRANSFORMATIONS
 import networkx as nx
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 # mmseqs createdb data/netgpi_dataset.fasta temp/netgpi_db
 # mmseqs prefilter -s 7.5 temp/netgpi_db temp/netgpi_db temp/netgpi_pref

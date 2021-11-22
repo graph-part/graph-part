@@ -12,7 +12,7 @@ import math
 from itertools import groupby
 from typing import Dict, List, Tuple, Iterator
 import concurrent.futures
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from .transformations import TRANSFORMATIONS
 
 

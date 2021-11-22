@@ -113,7 +113,7 @@ def get_args() -> argparse.Namespace:
     parser_needle.add_argument('--gapextend','-gapextend', type=float, default=0.5, help='Passed to needle. See EMBOSS documentation.')
     parser_needle.add_argument('--endweight','-endweight', action='store_true', help='Passed to needle. See EMBOSS documentation.')
     parser_needle.add_argument('--endopen','-endopen', type=float, default=10, help='Passed to needle. See EMBOSS documentation.')
-    parser_needle.add_argument('--endextend','-endextend', type=float, default=10, help='Passed to needle. See EMBOSS documentation.')
+    parser_needle.add_argument('--endextend','-endextend', type=float, default=0.5, help='Passed to needle. See EMBOSS documentation.')
     parser_needle.add_argument('--matrix', '--datafile','-datafile', type=str, default='EBLOSUM62', help='Passed to needle. See EMBOSS documentation.')
 
 

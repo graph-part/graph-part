@@ -352,7 +352,8 @@ def display_results(
     part_graph: nx.classes.graph.Graph, 
     full_graph: nx.classes.graph.Graph,
     labels: dict,
-    nr_of_parts: int) -> Tuple[pd.core.frame.DataFrame, pd.core.frame.DataFrame]:
+    nr_of_parts: int,
+    print: bool = True) -> Tuple[pd.core.frame.DataFrame, pd.core.frame.DataFrame]:
     """ """
     df = pd.DataFrame(((d) for n,d in full_graph.nodes(data=True)))
     df['cluster'] = [part_graph.nodes[n]['cluster'] for n in full_graph.nodes()]
@@ -374,10 +375,12 @@ def display_results(
         result.loc[labels[l]['val'], 'label'] = l
         result['mean'] = result[list(range(nr_of_parts))].mean(axis=1)
         result['count'] = result[list(range(nr_of_parts))].sum(axis=1)
-    print(result)
-    print()
-    print("Partitioning score:", score_partitioning(result[range(nr_of_parts)]))
-    print()
+    
+    if print:
+        print(result)
+        print()
+        print("Partitioning score:", score_partitioning(result[range(nr_of_parts)]))
+        print()
     return df, result
     
 
@@ -399,7 +402,9 @@ def removal_needed(
 def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_file: bool = True, write_json_report: bool=True) -> pd.core.frame.DataFrame:
     '''
     Core Graph-Part partitioning function. `config` contains all parameters passed from the command line
-    or Python API. See `cli.py` for the definitions. 
+    or Python API. See `cli.py` for the definitions.  
+
+    `write_output_file=False` also suppresses most prints.
     '''
 
     s = time.perf_counter()
@@ -430,7 +435,8 @@ def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_
         labels[l]['lim'] = labels[l]['num']//config['partitions']
 
     ## Let's see the initial label distribution
-    print(pd.DataFrame(labels).T)
+    if write_output_file:
+        print(pd.DataFrame(labels).T)
     json_dict['labels_start'] = labels
 
 
@@ -475,7 +481,7 @@ def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_
 
     if config['save_checkpoint_path'] is not None:
         from .transformations import INVERSE_TRANSFORMATIONS
-        from tqdm import tqdm
+        from tqdm.auto import tqdm
         print(f'Saving edge list at {config["save_checkpoint_path"]} ...')
         with open(config['save_checkpoint_path'], 'w') as f:
             inv_tf = INVERSE_TRANSFORMATIONS[config['transformation']]
@@ -489,12 +495,12 @@ def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_
     ## Finally, let's partition this
     partition_data(full_graph, part_graph, labels, threshold, config['partitions'], config['initialization_mode'])
 
-    df, result = display_results(part_graph, full_graph, labels, config['partitions'])
+    df, result = display_results(part_graph, full_graph, labels, config['partitions'], print=write_output_file)
     if config['test_ratio']>0:
         train_val_test_split(part_graph, full_graph, threshold, config['test_ratio'], config['val_ratio'], config['partitions'])
         config['partitions'] = 3 if config['val_ratio']>0 else 2
 
-    df, result = display_results(part_graph, full_graph, labels, config['partitions'])
+    df, result = display_results(part_graph, full_graph, labels, config['partitions'], print=write_output_file)
     if write_output_file:
         df.to_csv(config['out_file'] + "pre-removal")
     print('Currently have this many samples:', full_graph.number_of_nodes())
@@ -517,7 +523,7 @@ def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_
     print('After removal we have this many samples:', full_graph.number_of_nodes())
 
 
-    df, result = display_results(part_graph, full_graph, labels, config['partitions'])
+    df, result = display_results(part_graph, full_graph, labels, config['partitions'], print=write_output_file)
 
     json_dict['partitioning_after_removal'] = result.to_json()
     json_dict['samples_after_removal'] = full_graph.number_of_nodes()
@@ -536,7 +542,8 @@ def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_
     elapsed = time.perf_counter() - s
     json_dict['time_script_complete'] = time.perf_counter()
 
-    print(f"Graph-Part executed in {elapsed:0.2f} seconds.")
+    if write_output_file:
+        print(f"Graph-Part executed in {elapsed:0.2f} seconds.")
 
     if write_json_report:
         import json
