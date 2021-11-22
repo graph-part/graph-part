@@ -296,6 +296,8 @@ def compute_edges(query_fp: str,
                 else:
                     full_graph.add_edge(this_qry, this_lib, metric=metric)  
 
+    # we're done, so report the remainder.
+    progress_bar.update(count)
     return True
 
 def generate_edges_mp(entity_fp: str, 
@@ -351,8 +353,6 @@ def generate_edges_mp(entity_fp: str,
     pbar_update_interval = int((n_alignments * 0.0005)/n_procs) 
     pbar_update_interval = min(1000, pbar_update_interval)
 
-    progress_update_interval = 1000 # we do this manually to work well with multithreading.
-
     pbar = tqdm(total= n_alignments)
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_procs) as executor:
         for i in range(n_chunks):
@@ -369,7 +369,10 @@ def generate_edges_mp(entity_fp: str,
             if job.exception() is not None:
                 print(job.exception())
                 raise RuntimeError('One of the alignment threads did not complete sucessfully.')
-
+    
+    # As the initial total was just approximate, fill it up to give proper 100% completion.
+    pbar.update(pbar.total - pbar.n)
+    pbar.close()
     #delete the chunks
     for i in range(n_chunks):
         remove(f'graphpart_{i}.fasta.tmp')

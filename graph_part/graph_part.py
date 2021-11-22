@@ -267,7 +267,8 @@ def remover(full_graph: nx.classes.graph.Graph,
             json_dict: Dict[str, Any],
             move_to_most_neighbourly:bool = True, 
             ignore_priority:bool = True,
-            simplistic_removal:bool = True):
+            simplistic_removal:bool = True,
+            print: bool = True):
 
     if ignore_priority:
         json_dict['removal_step_1'] = {}
@@ -276,7 +277,8 @@ def remover(full_graph: nx.classes.graph.Graph,
         json_dict['removal_step_2'] = {}
         dict_key = 'removal_step_2'
     
-    print("Min-threshold", "\t", "#Entities", "\t", "#Edges", "\t", "Connectivity", "\t", "#Problematics", "\t", "#Relocated", "\t", "#To-be-removed")
+    if print:
+        print("Min-threshold", "\t", "#Entities", "\t", "#Edges", "\t", "Connectivity", "\t", "#Problematics", "\t", "#Relocated", "\t", "#To-be-removed")
     removing_round = 0
     while True:
         between_connectivity = {}
@@ -326,7 +328,8 @@ def remover(full_graph: nx.classes.graph.Graph,
         ## Remove 1% + 1 of the most problematic entities
         remove_these = [x[0] for x in sorted(((n,d['between_connectivity']) for n,d in full_graph.nodes(data=True) if d['between_connectivity'] > 0), key=lambda x:x[1], reverse=True)[:number_to_remove]]
         
-        print(round(min_oc_wth,7), "\t\t", full_graph.number_of_nodes(), "\t\t", full_graph.number_of_edges(), "\t\t", bc_sum, "\t\t", bc_count, "\t\t", number_moved, "\t\t", len(remove_these))
+        if print:
+            print(round(min_oc_wth,7), "\t\t", full_graph.number_of_nodes(), "\t\t", full_graph.number_of_edges(), "\t\t", bc_sum, "\t\t", bc_count, "\t\t", number_moved, "\t\t", len(remove_these))
         
         json_dict[dict_key][removing_round] = {
                                                 "Min-threshold": round(min_oc_wth,7) ,
@@ -399,7 +402,7 @@ def removal_needed(
                 return True
     return False
 
-def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_file: bool = True, write_json_report: bool=True) -> pd.core.frame.DataFrame:
+def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_file: bool = True, write_json_report: bool=True, verbose: bool=True) -> pd.core.frame.DataFrame:
     '''
     Core Graph-Part partitioning function. `config` contains all parameters passed from the command line
     or Python API. See `cli.py` for the definitions.  
@@ -435,7 +438,7 @@ def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_
         labels[l]['lim'] = labels[l]['num']//config['partitions']
 
     ## Let's see the initial label distribution
-    if write_output_file:
+    if verbose:
         print(pd.DataFrame(labels).T)
     json_dict['labels_start'] = labels
 
@@ -445,13 +448,15 @@ def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_
         print('Parsing edge list.')
         load_edge_list(config['edge_file'], full_graph, config['transformation'], threshold, config['metric_column'])
         elapsed_align = time.perf_counter() - s
-        print(f"Edge list parsing executed in {elapsed_align:0.2f} seconds.")
+        if verbose:
+            print(f"Edge list parsing executed in {elapsed_align:0.2f} seconds.")
 
     elif config['alignment_mode'] == 'mmseqs2':
         from .mmseqs_utils import generate_edges_mmseqs
         generate_edges_mmseqs(config['fasta_file'], full_graph, config['transformation'], threshold, config['threshold'], denominator=config['denominator'], delimiter='|', is_nucleotide=config['nucleotide'])
         elapsed_align = time.perf_counter() - s
-        print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")    
+        if verbose:
+            print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")    
 
     elif config['alignment_mode'] == 'needle' and config['threads']>1:
         from .needle_utils import generate_edges_mp
@@ -459,7 +464,8 @@ def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_
         generate_edges_mp(config['fasta_file'], full_graph, config['transformation'], threshold, denominator=config['denominator'], n_chunks=config['chunks'], n_procs=config['threads'], triangular=config['triangular'], delimiter='|', 
                             is_nucleotide=config['nucleotide'], gapopen=config['gapopen'], gapextend=config['gapextend'], endweight=config['endweight'], endopen=config['endopen'], endextend=config['endextend'], matrix=config['matrix'])
         elapsed_align = time.perf_counter() - s
-        print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")
+        if verbose:
+            print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")
 
     elif config['alignment_mode'] == 'needle':
         from .needle_utils import generate_edges
@@ -467,7 +473,8 @@ def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_
         generate_edges(config['fasta_file'],full_graph, config['transformation'], threshold, denominator=config['denominator'], delimiter='|',
                             is_nucleotide=config['nucleotide'], gapopen=config['gapopen'], gapextend=config['gapextend'], endweight=config['endweight'], endopen=config['endopen'], endextend=config['endextend'], matrix=config['matrix'])
         elapsed_align = time.perf_counter() - s
-        print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")
+        if verbose:
+            print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")
 
     else:
         raise NotImplementedError('Encountered unspecified alignment mode. This should never happen.')
@@ -495,12 +502,12 @@ def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_
     ## Finally, let's partition this
     partition_data(full_graph, part_graph, labels, threshold, config['partitions'], config['initialization_mode'])
 
-    df, result = display_results(part_graph, full_graph, labels, config['partitions'], print=write_output_file)
+    df, result = display_results(part_graph, full_graph, labels, config['partitions'], print=verbose)
     if config['test_ratio']>0:
         train_val_test_split(part_graph, full_graph, threshold, config['test_ratio'], config['val_ratio'], config['partitions'])
         config['partitions'] = 3 if config['val_ratio']>0 else 2
 
-    df, result = display_results(part_graph, full_graph, labels, config['partitions'], print=write_output_file)
+    df, result = display_results(part_graph, full_graph, labels, config['partitions'], print=verbose)
     if write_output_file:
         df.to_csv(config['out_file'] + "pre-removal")
     print('Currently have this many samples:', full_graph.number_of_nodes())
@@ -514,11 +521,11 @@ def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_
     if removal_needed(part_graph, full_graph, threshold):     
         print('Need to remove! Currently have this many samples:', full_graph.number_of_nodes())
 
-        remover(full_graph, part_graph, threshold, json_dict, config['allow_moving'], True, config['removal_type'])    
+        remover(full_graph, part_graph, threshold, json_dict, config['allow_moving'], True, config['removal_type'], print=verbose)    
 
     if removal_needed(part_graph, full_graph, threshold):   
         print('Need to remove priority! Currently have this many samples:', full_graph.number_of_nodes())
-        remover(full_graph, part_graph, threshold, json_dict, config['allow_moving'], False, config['removal_type'])    
+        remover(full_graph, part_graph, threshold, json_dict, config['allow_moving'], False, config['removal_type'], print=verbose)    
 
     print('After removal we have this many samples:', full_graph.number_of_nodes())
 
@@ -542,7 +549,7 @@ def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_
     elapsed = time.perf_counter() - s
     json_dict['time_script_complete'] = time.perf_counter()
 
-    if write_output_file:
+    if verbose:
         print(f"Graph-Part executed in {elapsed:0.2f} seconds.")
 
     if write_json_report:
