@@ -208,3 +208,25 @@ graphpart mmseqs2 -ff data/rna/SPOT-RNA-1D/spot_rna_1d.fasta -th 0.8 -of results
 python3 partitioning_quality/align_partitions.py --partition-file results/spotrna1d_partition_graphpart_needle.csv --fasta-file data/rna/SPOT-RNA-1D/spot_rna_1d.fasta --out-file results/spotrna1d_partition_graphpart_needle_qc.csv --nucleotide --matrix EDNAFULL --threads 20
 python3 partitioning_quality/align_partitions.py --partition-file results/spotrna1d_partition_graphpart_mmseqs2.csv --fasta-file data/rna/SPOT-RNA-1D/spot_rna_1d.fasta --out-file results/spotrna1d_partition_graphpart_mmseqs2_qc.csv --nucleotide --matrix EDNAFULL
 
+
+
+##
+## 8. NetSurfP data
+##
+python3 baselines/homology_partition_cd_hit.py --fasta-file data/protein/NetSurfP/netsurfp.fasta --threshold 0.25 --labels-name label --out-file results/netsurfp_partition_cd_hit.csv
+python3 baselines/homology_reduce_cd_hit.py --fasta-file data/protein/NetSurfP/netsurfp.fasta --threshold 0.25 --labels-name label --out-file results/netsurfp_reduction_cd_hit.csv
+
+python3 baselines/homology_partition_mmseqs2.py --fasta-file data/protein/NetSurfP/netsurfp.fasta --threshold 0.25 --labels-name label --out-file results/netsurfp_partition_mmseqs2_cmode0.csv --cluster-mode 0
+python3 baselines/homology_reduce_mmseqs2.py --fasta-file data/protein/NetSurfP/netsurfp.fasta --threshold 0.25 --labels-name label --out-file results/netsurfp_reduction_mmseqs2_cmode0.csv --cluster-mode 0
+
+graphpart needle -ff data/protein/NetSurfP/netsurfp.fasta -th 0.25 -ln label -of results/netsurfp_partition_graphpart_needle.csv -pa 5 --threads 20
+graphpart mmseqs2 -ff data/protein/NetSurfP/netsurfp.fasta -th 0.25 -ln label -of results/netsurfp_partition_graphpart_mmseqs2.csv -pa 5
+
+python3 partitioning_quality/align_partitions.py --partition-file results/netsurfp_partition_cd_hit.csv --fasta-file data/protein/NetSurfP/netsurfp.fasta --out-file results/netsurfp_partition_cd_hit_qc.csv --threads 20
+python3 partitioning_quality/align_partitions.py --partition-file results/netsurfp_reduction_cd_hit.csv --fasta-file data/protein/NetSurfP/netsurfp.fasta --out-file results/netsurfp_reduction_cd_hit_qc.csv --threads 20
+
+python3 partitioning_quality/align_partitions.py --partition-file results/netsurfp_partition_mmseqs2_cmode0.csv --fasta-file data/protein/NetSurfP/netsurfp.fasta --out-file results/netsurfp_partition_mmseqs2_cmode0_qc.csv --threads 15
+python3 partitioning_quality/align_partitions.py --partition-file results/netsurfp_reduction_mmseqs2_cmode0.csv --fasta-file data/protein/NetSurfP/netsurfp.fasta --out-file results/netsurfp_reduction_mmseqs2_cmode0_qc.csv --threads 15
+
+python3 partitioning_quality/align_partitions.py --partition-file results/netsurfp_partition_graphpart_needle.csv --fasta-file data/protein/NetSurfP/netsurfp.fasta --out-file results/netsurfp_partition_graphpart_needle_qc.csv 
+python3 partitioning_quality/align_partitions.py --partition-file results/netsurfp_partition_graphpart_mmseqs2.csv --fasta-file data/protein/NetSurfP/netsurfp.fasta --out-file results/netsurfp_partition_graphpart_mmseqs2_qc.csv

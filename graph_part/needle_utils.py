@@ -288,7 +288,10 @@ def compute_edges(query_fp: str,
                     raise RuntimeError(f'Tried to insert edge {this_qry}-{this_lib} into the graph, but did not find nodes. This should not happen, please report a bug.')
                 if full_graph.has_edge(this_qry, this_lib):
                     if full_graph[this_qry][this_lib]['metric'] > metric:
-                        nx.set_edge_attributes(full_graph,{(this_qry,this_lib):metric}, 'metric')
+                        full_graph.add_edge(this_qry, this_lib, metric=metric) #Notes: Adding an edge that already exists updates the edge data. 
+                        
+                        # this seems to be slow:
+                        #nx.set_edge_attributes(full_graph,{(this_qry,this_lib):metric}, 'metric')
 
                 else:
                     full_graph.add_edge(this_qry, this_lib, metric=metric)  

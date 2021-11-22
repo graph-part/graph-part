@@ -3,7 +3,7 @@ Parsing functions for precomputed similarities.
 '''
 import networkx as nx
 from .transformations import TRANSFORMATIONS
-
+from tqdm import tqdm
 
 def load_edge_list(edge_fp: str, 
                full_graph: nx.classes.graph.Graph, 
@@ -17,7 +17,7 @@ def load_edge_list(edge_fp: str,
     '''
     with open(edge_fp) as inf:
         #pdb.set_trace()
-        for line_nr, line in enumerate(inf):
+        for line_nr, line in tqdm(enumerate(inf)):
             spl = line.strip().split(',')
             if len(spl) < 3:
                 raise ValueError("""

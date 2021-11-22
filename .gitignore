@@ -6,3 +6,4 @@ fasta-36.3.8h
 *.pyc
 *.fa
 *.json
+*.txt

@@ -476,9 +476,10 @@ def main():
 
     if args.save_checkpoint_path is not None:
         from .transformations import INVERSE_TRANSFORMATIONS
-
+        from tqdm import tqdm
+        print(f'Saving edge list at {args.save_checkpoint_path} ...')
         with open(args.save_checkpoint_path, 'w') as f:
-            for qry, lib, data in full_graph.edges(data=True):
+            for qry, lib, data in tqdm(full_graph.edges(data=True)):
                 # we save the original metric. not the one that we transformed. So revert transformation.
                 score = INVERSE_TRANSFORMATIONS[args.transformation](data['metric'])
                 f.write(qry+ ',' + lib +',' + str(score) +'\n')

@@ -72,7 +72,8 @@ def generate_edges_mmseqs(entity_fp: str,
                 continue
             if full_graph.has_edge(this_qry, this_lib):
                 if full_graph[this_qry][this_lib]['metric'] > metric:
-                    nx.set_edge_attributes(full_graph,{(this_qry,this_lib):metric}, 'metric')
+                    #nx.set_edge_attributes(full_graph,{(this_qry,this_lib):metric}, 'metric')
+                    full_graph.add_edge(this_qry, this_lib, metric=metric) #Notes: Adding an edge that already exists updates the edge data. 
             else:
                 full_graph.add_edge(this_qry, this_lib, metric=metric)  
 
