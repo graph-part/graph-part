@@ -3,14 +3,13 @@
 import pandas as pd 
 import numpy as np
 import networkx as nx
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, Union
 import time
 from collections import Counter
 from itertools import product
 import time
 
 from .transformations import TRANSFORMATIONS
-from .cli import get_args
 from .train_val_test_split import train_val_test_split
 
 #TODO update new arg names here
@@ -397,26 +396,26 @@ def removal_needed(
                 return True
     return False
 
-def main():
+def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_file: bool = True, write_json_report: bool=True) -> pd.core.frame.DataFrame:
+    '''
+    Core Graph-Part partitioning function. `config` contains all parameters passed from the command line
+    or Python API. See `cli.py` for the definitions. 
+    '''
 
-    # in this dict we collect everything that we want to report.
-    json_dict = {}
-    
     s = time.perf_counter()
-    json_dict['time_script_start'] = s
+    # in this dict we collect everything that we want to report.
     
-    args = get_args()
-    json_dict['config'] = vars(args)
+    json_dict = {}
+    json_dict['time_script_start'] = s
+    json_dict['config'] = config
 
-    allow_moving = not args.no_moving
-    removal_type = not args.remove_same
     try:
-        with open(args.out_file, 'w+') as outf:
+        with open(config['out_file'], 'w+') as outf:
             pass
     except:
         raise ValueError("Output file path (-of/--out-file) improper or nonexistent.") 
     
-    threshold = TRANSFORMATIONS[args.transformation](args.threshold)
+    threshold = TRANSFORMATIONS[config['transformation']](config['threshold'])
     json_dict['config']['threshold_transformed'] = threshold
 
     ## End of parameter validation
@@ -424,43 +423,43 @@ def main():
     ## Processing starts here:
 
     ## Load entities/samples as networkx graphs. labels contains label metadata.
-    full_graph, part_graph, labels = load_entities(args.fasta_file, args.priority_name, args.labels_name)
+    full_graph, part_graph, labels = load_entities(config['fasta_file'], config['priority_name'], config['labels_name'])
 
     for l in labels:
         """ Find the expected number of entities labelled l in any partition """
-        labels[l]['lim'] = labels[l]['num']//args.partitions
+        labels[l]['lim'] = labels[l]['num']//config['partitions']
 
     ## Let's see the initial label distribution
     print(pd.DataFrame(labels).T)
     json_dict['labels_start'] = labels
 
 
-    if args.alignment_mode == 'precomputed':
+    if config['alignment_mode'] == 'precomputed':
         from .precomputed_utils import load_edge_list
         print('Parsing edge list.')
-        load_edge_list(args.edge_file, full_graph, args.transformation, threshold, args.metric_column)
+        load_edge_list(config['edge_file'], full_graph, config['transformation'], threshold, config['metric_column'])
         elapsed_align = time.perf_counter() - s
         print(f"Edge list parsing executed in {elapsed_align:0.2f} seconds.")
 
-    elif args.alignment_mode == 'mmseqs2':
+    elif config['alignment_mode'] == 'mmseqs2':
         from .mmseqs_utils import generate_edges_mmseqs
-        generate_edges_mmseqs(args.fasta_file, full_graph, args.transformation, threshold, args.threshold, denominator=args.denominator, delimiter='|', is_nucleotide=args.nucleotide)
+        generate_edges_mmseqs(config['fasta_file'], full_graph, config['transformation'], threshold, config['threshold'], denominator=config['denominator'], delimiter='|', is_nucleotide=config['nucleotide'])
         elapsed_align = time.perf_counter() - s
         print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")    
 
-    elif args.alignment_mode == 'needle' and args.threads>1:
+    elif config['alignment_mode'] == 'needle' and config['threads']>1:
         from .needle_utils import generate_edges_mp
         print('Computing pairwise sequence identities.')
-        generate_edges_mp(args.fasta_file, full_graph, args.transformation, threshold, denominator=args.denominator, n_chunks=args.chunks, n_procs=args.threads, triangular=args.triangular, delimiter='|', 
-                            is_nucleotide=args.nucleotide, gapopen=args.gapopen, gapextend=args.gapextend, endweight=args.endweight, endopen=args.endopen, endextend=args.endextend, matrix=args.matrix)
+        generate_edges_mp(config['fasta_file'], full_graph, config['transformation'], threshold, denominator=config['denominator'], n_chunks=config['chunks'], n_procs=config['threads'], triangular=config['triangular'], delimiter='|', 
+                            is_nucleotide=config['nucleotide'], gapopen=config['gapopen'], gapextend=config['gapextend'], endweight=config['endweight'], endopen=config['endopen'], endextend=config['endextend'], matrix=config['matrix'])
         elapsed_align = time.perf_counter() - s
         print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")
 
-    elif args.alignment_mode == 'needle':
+    elif config['alignment_mode'] == 'needle':
         from .needle_utils import generate_edges
         print('Computing pairwise sequence identities.')
-        generate_edges(args.fasta_file,full_graph, args.transformation, threshold, denominator=args.denominator, delimiter='|',
-                            is_nucleotide=args.nucleotide, gapopen=args.gapopen, gapextend=args.gapextend, endweight=args.endweight, endopen=args.endopen, endextend=args.endextend, matrix=args.matrix)
+        generate_edges(config['fasta_file'],full_graph, config['transformation'], threshold, denominator=config['denominator'], delimiter='|',
+                            is_nucleotide=config['nucleotide'], gapopen=config['gapopen'], gapextend=config['gapextend'], endweight=config['endweight'], endopen=config['endopen'], endextend=config['endextend'], matrix=config['matrix'])
         elapsed_align = time.perf_counter() - s
         print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")
 
@@ -474,53 +473,55 @@ def main():
     json_dict['graph_edges_start'] = full_graph.number_of_edges()
     json_dict['time_edges_complete'] = time.perf_counter()
 
-    if args.save_checkpoint_path is not None:
+    if config['save_checkpoint_path'] is not None:
         from .transformations import INVERSE_TRANSFORMATIONS
         from tqdm import tqdm
-        print(f'Saving edge list at {args.save_checkpoint_path} ...')
-        with open(args.save_checkpoint_path, 'w') as f:
+        print(f'Saving edge list at {config["save_checkpoint_path"]} ...')
+        with open(config['save_checkpoint_path'], 'w') as f:
+            inv_tf = INVERSE_TRANSFORMATIONS[config['transformation']]
             for qry, lib, data in tqdm(full_graph.edges(data=True)):
                 # we save the original metric. not the one that we transformed. So revert transformation.
-                score = INVERSE_TRANSFORMATIONS[args.transformation](data['metric'])
+                score = inv_tf(data['metric'])
                 f.write(qry+ ',' + lib +',' + str(score) +'\n')
 
 
     
     ## Finally, let's partition this
-    partition_data(full_graph, part_graph, labels, threshold, args.partitions, args.initialization_mode)
+    partition_data(full_graph, part_graph, labels, threshold, config['partitions'], config['initialization_mode'])
 
-    df, result = display_results(part_graph, full_graph, labels, args.partitions)
-    if args.test_ratio>0:
-        train_val_test_split(part_graph, full_graph, threshold, args.test_ratio, args.val_ratio, args.partitions)
-        setattr(args, 'partitions', 3 if args.val_ratio>0 else 2)
+    df, result = display_results(part_graph, full_graph, labels, config['partitions'])
+    if config['test_ratio']>0:
+        train_val_test_split(part_graph, full_graph, threshold, config['test_ratio'], config['val_ratio'], config['partitions'])
+        config['partitions'] = 3 if config['val_ratio']>0 else 2
 
-    df, result = display_results(part_graph, full_graph, labels, args.partitions)
-    df.to_csv(args.out_file + "pre-removal")
+    df, result = display_results(part_graph, full_graph, labels, config['partitions'])
+    if write_output_file:
+        df.to_csv(config['out_file'] + "pre-removal")
     print('Currently have this many samples:', full_graph.number_of_nodes())
 
     json_dict['partitioning_pre_removal'] = result.to_json()
     json_dict['samples_pre_removal'] = full_graph.number_of_nodes()
-    json_dict['score_pre_removal'] = score_partitioning(result[range(args.partitions)])
+    json_dict['score_pre_removal'] = score_partitioning(result[range(config['partitions'])])
 
     
     ## Check if we need to remove any
     if removal_needed(part_graph, full_graph, threshold):     
         print('Need to remove! Currently have this many samples:', full_graph.number_of_nodes())
 
-        remover(full_graph, part_graph, threshold, json_dict, allow_moving, True, removal_type)    
+        remover(full_graph, part_graph, threshold, json_dict, config['allow_moving'], True, config['removal_type'])    
 
     if removal_needed(part_graph, full_graph, threshold):   
         print('Need to remove priority! Currently have this many samples:', full_graph.number_of_nodes())
-        remover(full_graph, part_graph, threshold, json_dict, allow_moving, False, removal_type)    
+        remover(full_graph, part_graph, threshold, json_dict, config['allow_moving'], False, config['removal_type'])    
 
     print('After removal we have this many samples:', full_graph.number_of_nodes())
 
 
-    df, result = display_results(part_graph, full_graph, labels, args.partitions)
+    df, result = display_results(part_graph, full_graph, labels, config['partitions'])
 
     json_dict['partitioning_after_removal'] = result.to_json()
     json_dict['samples_after_removal'] = full_graph.number_of_nodes()
-    json_dict['score_after_removal'] = score_partitioning(result[range(args.partitions)])
+    json_dict['score_after_removal'] = score_partitioning(result[range(config['partitions'])])
 
     if removal_needed(part_graph, full_graph, threshold):
         print ("Something is wrong! Removal still needed!")
@@ -529,17 +530,18 @@ def main():
         json_dict['removal_needed_end'] = False
 
     ## clustering to outfile. This will probably change...
-    df.to_csv(args.out_file)
+    if write_output_file:
+        df.to_csv(config['out_file'])
 
     elapsed = time.perf_counter() - s
     json_dict['time_script_complete'] = time.perf_counter()
 
     print(f"Graph-Part executed in {elapsed:0.2f} seconds.")
 
-    import json
-    import os
-    #import ipdb; ipdb.set_trace()
-    json.dump(json_dict, open(os.path.splitext(args.out_file)[0]+'_report.json','w'))
+    if write_json_report:
+        import json
+        import os
+        json.dump(json_dict, open(os.path.splitext(config['out_file'])[0]+'_report.json','w'))
 
-if __name__ == "__main__":
-    main()
+
+    return df

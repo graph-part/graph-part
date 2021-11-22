@@ -1,6 +1,6 @@
 __version__ ="1.0"
 
-from .graph_part import main
+from .cli import main
 
 def run_graph_part():
     main()
