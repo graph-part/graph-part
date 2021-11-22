@@ -1,6 +1,7 @@
 __version__ ="1.0"
 
-from .graph_part import main
+from .cli import main
+from .api import train_test_split, stratified_k_fold
 
 def run_graph_part():
     main()

@@ -5,6 +5,7 @@ import argparse
 import os
 from .transformations import TRANSFORMATIONS
 from .train_val_test_split import check_train_val_test_args
+from .graph_part import run_partitioning
 
 #TODO check all help strings and update if needed
 def get_args() -> argparse.Namespace:
@@ -112,7 +113,7 @@ def get_args() -> argparse.Namespace:
     parser_needle.add_argument('--gapextend','-gapextend', type=float, default=0.5, help='Passed to needle. See EMBOSS documentation.')
     parser_needle.add_argument('--endweight','-endweight', action='store_true', help='Passed to needle. See EMBOSS documentation.')
     parser_needle.add_argument('--endopen','-endopen', type=float, default=10, help='Passed to needle. See EMBOSS documentation.')
-    parser_needle.add_argument('--endextend','-endextend', type=float, default=10, help='Passed to needle. See EMBOSS documentation.')
+    parser_needle.add_argument('--endextend','-endextend', type=float, default=0.5, help='Passed to needle. See EMBOSS documentation.')
     parser_needle.add_argument('--matrix', '--datafile','-datafile', type=str, default='EBLOSUM62', help='Passed to needle. See EMBOSS documentation.')
 
 
@@ -150,3 +151,13 @@ def get_args() -> argparse.Namespace:
     
             
     return args
+
+def main():
+
+    
+    args = get_args()
+    config = vars(args)
+    config['allow_moving'] = not args.no_moving
+    config['removal_type'] = not args.remove_same
+
+    run_partitioning(config, write_output_file=True, write_json_report=True)
