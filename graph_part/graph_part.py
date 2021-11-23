@@ -533,6 +533,7 @@ def partition_and_remove(full_graph: nx.classes.graph.Graph, part_graph: nx.clas
     else:
         json_dict['removal_needed_end'] = False
 
+    return df
 
 
 def run_partitioning(config: Dict[str, Union[str,int,float,bool]], write_output_file: bool = True, write_json_report: bool=True, verbose: bool=True) -> pd.core.frame.DataFrame:
