@@ -11,7 +11,10 @@ from tqdm.auto import tqdm
 from .graph_part import partition_and_remove
 
 
-# TODO find out standard file format or make command-line only.
+# TODO
+# accept pre-converted RDkit molecules, not just smiles.
+# additional fingerprint algorithms
+# parallelize BulkTanimotoSimilarity
 # TODO rdkit tanimoto similarity workflow
 
 def load_entities(molecules: Dict[str,str], labels: Dict[str,str] = None, priorities: Dict[str,str] = None):
@@ -33,8 +36,9 @@ def load_entities(molecules: Dict[str,str], labels: Dict[str,str] = None, priori
 
         if label not in labels_out:
             labels_out[label] = {'val':len(labels_out), 'num':0}
-            labels_out[label]['num'] += 1
-            label = labels_out[label]['val']
+        
+        labels_out[label]['num'] += 1
+        label = labels_out[label]['val']
 
         full_graph.add_node(id)
         part_graph.add_node(id)
@@ -175,9 +179,13 @@ def train_test_validation_split(molecules: Union[List[str], np.ndarray, Dict[str
 
     # make the graph
     full_graph, part_graph, labels = load_entities(molecules, labels, priority)
+    for l in labels:
+        """ Find the expected number of entities labelled l in any partition """
+        labels[l]['lim'] = labels[l]['num']//partitions
 
     # add the edges
     compute_fingerprint_tanimoto_distances(full_graph, molecules, threshold)
+    print("Full graph nr. of edges:", full_graph.number_of_edges())
 
 
     # run graph-part
@@ -199,6 +207,8 @@ def train_test_validation_split(molecules: Union[List[str], np.ndarray, Dict[str
         "allow_moving": not no_moving, # silly conversions because in the CLI we want to have those default-false.
         "removal_type": not remove_same,
     }
+
+    print(labels)
     partition_assignment_df = partition_and_remove(full_graph, part_graph, labels, json_dict={}, threshold=threshold, config=config, verbose=False)
 
     # 4. Make output lists.
