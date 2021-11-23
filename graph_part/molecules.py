@@ -153,6 +153,7 @@ def train_test_validation_split(molecules: Union[List[str], np.ndarray, Dict[str
                      triangular: bool = False,
                      edge_file: str = None,
                      metric_column: str = None,
+                     verbose: bool = False
                      ) -> List[Iterable]:
 
     try:
@@ -183,6 +184,7 @@ def train_test_validation_split(molecules: Union[List[str], np.ndarray, Dict[str
         """ Find the expected number of entities labelled l in any partition """
         labels[l]['lim'] = labels[l]['num']//partitions
 
+    threshold = 1- threshold
     # add the edges
     compute_fingerprint_tanimoto_distances(full_graph, molecules, threshold)
     print("Full graph nr. of edges:", full_graph.number_of_edges())
@@ -209,7 +211,7 @@ def train_test_validation_split(molecules: Union[List[str], np.ndarray, Dict[str
     }
 
     print(labels)
-    partition_assignment_df = partition_and_remove(full_graph, part_graph, labels, json_dict={}, threshold=threshold, config=config, verbose=False)
+    partition_assignment_df = partition_and_remove(full_graph, part_graph, labels, json_dict={}, threshold=threshold, config=config, verbose=verbose)
 
     # 4. Make output lists.
     partition_assignment_df = partition_assignment_df.reset_index()
