@@ -33,6 +33,8 @@ pip install graphpart
 The command `graphpart` will now be available on your command line.
 
 ## Instructions
+
+### Command line
 As an example, this is a basic command for partitioning a dataset at a maximum pairwise cross-partition identity of 30% into 5 folds. The resulting partitions are balanced for equal frequencies of the class labels specified in `label=` in the FASTA headers. `--threads` can be adapted according to your system and has no effect on the partitioning itself.
 ```
 graphpart needle --fasta-file netgpi_dataset.fasta --threshold 0.3 --out-file graphpart_assignments.csv --labels-name label --partitions 5 --threads 12
@@ -42,6 +44,8 @@ Alternatively, a train-validation-test split of the data can be made instead of 
 ```
 graphpart needle --fasta-file netgpi_dataset.fasta --threshold 0.3 --out-file graphpart_assignments.csv --labels-name label --test-ratio 0.1 --val-ratio 0.05 --threads 12
 ```
+### Notebook
+A tutorial showcasing how to use Graph-Part from within Python is included at [tutorial.ipynb](tutorial.ipynb)
 
 
 ## Input format
@@ -140,7 +144,6 @@ WIP
 `chunks` should be picked so that all `threads` are utilized. Each chunk is aligned to each other chunk, so `threads` <= `chunks`*`chunks` results in full utilization.
 
 - **I want to test multiple thresholds and partitioning parameters - How can I do this efficiently ?**  
-
 When constructing the graph, we only retain identities that are larger than the selected `threshold`, as only those form relevant edges for partitioning the data. All other similarities are discarded as they are computed. To test multiple thresholds, the most efficient way is to first try the lowest threshold to be considered and save the edge list by specifying `--save-checkpoint-path EDGELIST.csv`. In the next run, use `graph-part precomputed -ef EDGELIST.csv` to start directly from the previous alignment result.
 
 
