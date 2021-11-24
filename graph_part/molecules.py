@@ -210,7 +210,78 @@ def train_test_validation_split(molecules: Union[List[str], np.ndarray, Dict[str
         "removal_type": not remove_same,
     }
 
-    print(labels)
+    partition_assignment_df = partition_and_remove(full_graph, part_graph, labels, json_dict={}, threshold=threshold, config=config, verbose=verbose)
+
+    # 4. Make output lists.
+    partition_assignment_df = partition_assignment_df.reset_index()
+    outs = []
+    # iterate over all created folds and add to the output list.
+    for _, sub_df in partition_assignment_df.groupby('cluster'):
+
+        if original_type in [np.ndarray, list]:
+            outs.append(sub_df.index.tolist())
+        else:
+            outs.append(sub_df['AC'].tolist())
+    return outs
+
+
+def stratified_k_fold(molecules: Union[List[str], np.ndarray, Dict[str,str]], 
+                     labels: Union[List[str], np.ndarray, Dict[str,str]] = None,
+                     priority: Union[List[str], np.ndarray, Dict[str,str]] = None,
+                     partitions: int = 5,
+                     threshold: float = 0.3,
+                     initialization_mode: str = 'slow-nn',
+                     no_moving: bool = False,
+                     remove_same: bool = False,
+                     save_checkpoint_path: str = None,
+                     triangular: bool = False,
+                     edge_file: str = None,
+                     metric_column: str = None,
+                     verbose: bool = False
+                     ) -> List[Iterable]:
+
+    try:
+        from rdkit import Chem
+        from rdkit.Chem import AllChem
+    except ModuleNotFoundError:
+        raise ImportError("This function requires RDKit to be installed.")
+
+
+    original_type = type(molecules)
+    molecules, labels, priority = _convert_to_dict(molecules, labels, priority)
+
+    # make the graph
+    full_graph, part_graph, labels = load_entities(molecules, labels, priority)
+    for l in labels:
+        """ Find the expected number of entities labelled l in any partition """
+        labels[l]['lim'] = labels[l]['num']//partitions
+
+    threshold = 1- threshold
+    # add the edges
+    compute_fingerprint_tanimoto_distances(full_graph, molecules, threshold)
+    print("Full graph nr. of edges:", full_graph.number_of_edges())
+
+
+    # run graph-part
+    config = {
+        "threshold": threshold,
+        "partitions": partitions,
+        "out_file": "graphpart_python", # not used anyway
+        "priority_name": "priority" if priority is not None else None,
+        "labels_name": "label" if labels is not None else None,
+        "initialization_mode": initialization_mode,
+        "no_moving": no_moving,
+        "remove_same": remove_same,
+        "test_ratio": 0,
+        "val_ratio": 0,
+        "save_checkpoint_path": save_checkpoint_path,
+        "triangular": triangular,
+        "edge_file": edge_file,
+        "metric_column": metric_column,
+        "allow_moving": not no_moving, # silly conversions because in the CLI we want to have those default-false.
+        "removal_type": not remove_same,
+    }
+
     partition_assignment_df = partition_and_remove(full_graph, part_graph, labels, json_dict={}, threshold=threshold, config=config, verbose=verbose)
 
     # 4. Make output lists.
