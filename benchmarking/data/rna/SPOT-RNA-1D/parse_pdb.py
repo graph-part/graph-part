@@ -34,7 +34,7 @@ def parse_pdb(filepath):
         if rec_name is None:
             raise ValueError("Empty file.")
             
-        
+
         out_list = []
         for chn_id, residues in sorted(chains.items()):
             rec = {'sequence': "".join(residues),
@@ -43,9 +43,11 @@ def parse_pdb(filepath):
             if chn_id in metadata:
                 m = metadata[chn_id][0]
                 rec['id'] = f"{m['pdb_id']}:{chn_id}"
+
+            # TODO this will cause duplicates
             else:
-                rec['id'] = chn_id
-                
+                pdb_id = filepath[:-4].split('/')[1]
+                rec['id'] = f"{pdb_id}:{chn_id}"
             out_list.append(rec)
         return out_list
 
