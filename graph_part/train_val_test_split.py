@@ -59,7 +59,7 @@ def find_best_partition_combinations(partition_connections: np.ndarray, n_train:
     
     def get_best_combination(partitions, n):
         best_combination = []
-        best_score = 0
+        best_score = -1 # When a partition has no connection to any other, or to itself, the score will be 0. So make this -1
         for comb in combinations(partitions, n):
             score = partition_connections[comb,:][:,comb].sum()
             if score>best_score:
@@ -100,7 +100,6 @@ def train_val_test_split(part_graph: nx.classes.graph.Graph,
     # Given the similarity matrix, find the combinations with maximum overlap.
     # By doing this now, we reduce the number of move/removal operations later.
     train_partitions, test_partitions, val_partitions = find_best_partition_combinations(partition_connections, n_train, n_test)
-
     # Given the new assignments, update the graph.
     # part_graph has the following format: {'C0IW58': {'cluster': 0.0, 'C-size': 124, 'label-counts': array([92, 32])}
 
