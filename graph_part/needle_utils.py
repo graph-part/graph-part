@@ -186,16 +186,13 @@ def generate_edges(entity_fp: str,
 
     remove('graphpart_0.fasta.tmp')
 
-
+from multiprocessing import Manager
 
 def compute_edges(query_fp: str,
                   library_fp: str,
-                  full_graph: nx.classes.graph.Graph, 
                   transformation: str,
                   threshold: float,
                   seq_lens: Dict[str,int],
-                  progress_bar: tqdm,
-                  progress_bar_update_interval: int = 1000,
                   denominator = 'full',
                   delimiter: str = '|',
                   is_nucleotide: bool = False,
@@ -211,6 +208,8 @@ def compute_edges(query_fp: str,
     Retrieve pairwise similiarities, transform and
     insert into edge_dict.
     '''
+    identity_list = []
+
     if is_nucleotide:
         type_1, type_2, = '-snucleotide1', '-snucleotide2'
     else:
@@ -249,10 +248,6 @@ def compute_edges(query_fp: str,
             #TODO gaps is only reported after the identity...
             elif line.startswith('# Gaps:'):
 
-                count += 1
-                if count == progress_bar_update_interval:
-                    progress_bar.update(progress_bar_update_interval)
-                    count = 0
 
                 # Gaps:           0/142 ( 0.0%)
                 gaps, rest = line[7:].split('/')
@@ -282,23 +277,12 @@ def compute_edges(query_fp: str,
                     continue
                 if metric > threshold:
                     continue
-
+                
+                identity_list.append((this_qry, this_lib, metric))
                 # NOTE this case should raise an error - graph was constructed from same file before, and so all the nodes should be there.
-                if not full_graph.has_node(this_qry) or not full_graph.has_node(this_lib):
-                    raise RuntimeError(f'Tried to insert edge {this_qry}-{this_lib} into the graph, but did not find nodes. This should not happen, please report a bug.')
-                if full_graph.has_edge(this_qry, this_lib):
-                    if full_graph[this_qry][this_lib]['metric'] > metric:
-                        full_graph.add_edge(this_qry, this_lib, metric=metric) #Notes: Adding an edge that already exists updates the edge data. 
-                        
-                        # this seems to be slow:
-                        #nx.set_edge_attributes(full_graph,{(this_qry,this_lib):metric}, 'metric')
+ 
 
-                else:
-                    full_graph.add_edge(this_qry, this_lib, metric=metric)  
-
-    # we're done, so report the remainder.
-    progress_bar.update(count)
-    return True
+    return identity_list
 
 def generate_edges_mp(entity_fp: str, 
                   full_graph: nx.classes.graph.Graph, 
@@ -353,26 +337,47 @@ def generate_edges_mp(entity_fp: str,
     pbar_update_interval = int((n_alignments * 0.0005)/n_procs) 
     pbar_update_interval = min(1000, pbar_update_interval)
 
-    pbar = tqdm(total= n_alignments)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=n_procs) as executor:
+    #pbar = tqdm(total= n_alignments)
+
+    
+
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n_procs) as executor:
         for i in range(n_chunks):
             start = i if triangular else 0
             for j in range(start, n_chunks):
                 q = f'graphpart_{i}.fasta.tmp'
                 l = f'graphpart_{j}.fasta.tmp'
-                future = executor.submit(compute_edges, q, l, full_graph, transformation, threshold, seq_lens, pbar, pbar_update_interval, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)
+                future = executor.submit(compute_edges, q, l, transformation, threshold, seq_lens, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)
                 jobs.append(future)
 
-        # This should force the script to throw exceptions that occured in the threads
-        # We otherwise never retrieve a future's value, so it might go unnoticed.
-        for job in jobs:
+
+
+        identity_list = []
+        for job in tqdm(jobs):
             if job.exception() is not None:
                 print(job.exception())
                 raise RuntimeError('One of the alignment threads did not complete sucessfully.')
-    
-    # As the initial total was just approximate, fill it up to give proper 100% completion.
-    pbar.update(pbar.total - pbar.n)
-    pbar.close()
+            else:
+                chunk_identities = job.result()
+                identity_list.extend(chunk_identities)
+
+
+    for this_qry, this_lib, metric in tqdm(identity_list):
+
+
+        if not full_graph.has_node(this_qry) or not full_graph.has_node(this_lib):
+            raise RuntimeError(f'Tried to insert edge {this_qry}-{this_lib} into the graph, but did not find nodes. This should not happen, please report a bug.')
+        if full_graph.has_edge(this_qry, this_lib):
+            if full_graph[this_qry][this_lib]['metric'] > metric:
+                full_graph.add_edge(this_qry, this_lib, metric=metric) #Notes: Adding an edge that already exists updates the edge data. 
+                
+                # this seems to be slow:
+                #nx.set_edge_attributes(full_graph,{(this_qry,this_lib):metric}, 'metric')
+
+        else:
+            full_graph.add_edge(this_qry, this_lib, metric=metric) 
+
+
     #delete the chunks
     for i in range(n_chunks):
         remove(f'graphpart_{i}.fasta.tmp')
