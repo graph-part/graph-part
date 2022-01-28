@@ -202,7 +202,7 @@ def compute_edges(query_fp: str,
                   endopen: float = 10,
                   endextend: float = 0.5,
                   matrix: str = 'EBLOSUM62',
-                  ) -> None:
+                  ) -> Tuple[int, List[Tuple[str,str,float]]]:
     '''
     Run needleall on query_fp and library_fp,
     Retrieve pairwise similiarities, transform and
@@ -247,6 +247,7 @@ def compute_edges(query_fp: str,
 
             #TODO gaps is only reported after the identity...
             elif line.startswith('# Gaps:'):
+                count +=1
 
 
                 # Gaps:           0/142 ( 0.0%)
@@ -282,7 +283,7 @@ def compute_edges(query_fp: str,
                 # NOTE this case should raise an error - graph was constructed from same file before, and so all the nodes should be there.
  
 
-    return identity_list
+    return (count, identity_list)
 
 def generate_edges_mp(entity_fp: str, 
                   full_graph: nx.classes.graph.Graph, 
@@ -352,31 +353,31 @@ def generate_edges_mp(entity_fp: str,
 
 
 
-        identity_list = []
-        for job in tqdm(jobs):
+        pbar = tqdm(total=n_alignments)
+        for job in jobs:
             if job.exception() is not None:
                 print(job.exception())
-                raise RuntimeError('One of the alignment threads did not complete sucessfully.')
+                # TODO we don't yet know how to recover correctly. It just should not happen in general.
+                raise RuntimeError('One of the alignment processes did not complete sucessfully.')
             else:
-                chunk_identities = job.result()
-                identity_list.extend(chunk_identities)
+                count, chunk_identities = job.result()
 
+                # while we wait on more jobs to finish, we can parse results as they come in.
+                for this_qry, this_lib, metric in chunk_identities:
 
-    for this_qry, this_lib, metric in tqdm(identity_list):
+                    if not full_graph.has_node(this_qry) or not full_graph.has_node(this_lib):
+                        raise RuntimeError(f'Tried to insert edge {this_qry}-{this_lib} into the graph, but did not find nodes. This should not happen, please report a bug.')
+                    if full_graph.has_edge(this_qry, this_lib):
+                        if full_graph[this_qry][this_lib]['metric'] > metric:
+                            full_graph.add_edge(this_qry, this_lib, metric=metric) #Notes: Adding an edge that already exists updates the edge data. 
+                            
+                            # this seems to be slow:
+                            #nx.set_edge_attributes(full_graph,{(this_qry,this_lib):metric}, 'metric')
 
-
-        if not full_graph.has_node(this_qry) or not full_graph.has_node(this_lib):
-            raise RuntimeError(f'Tried to insert edge {this_qry}-{this_lib} into the graph, but did not find nodes. This should not happen, please report a bug.')
-        if full_graph.has_edge(this_qry, this_lib):
-            if full_graph[this_qry][this_lib]['metric'] > metric:
-                full_graph.add_edge(this_qry, this_lib, metric=metric) #Notes: Adding an edge that already exists updates the edge data. 
+                    else:
+                        full_graph.add_edge(this_qry, this_lib, metric=metric) 
                 
-                # this seems to be slow:
-                #nx.set_edge_attributes(full_graph,{(this_qry,this_lib):metric}, 'metric')
-
-        else:
-            full_graph.add_edge(this_qry, this_lib, metric=metric) 
-
+                pbar.update(count)
 
     #delete the chunks
     for i in range(n_chunks):
