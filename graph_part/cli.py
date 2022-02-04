@@ -107,6 +107,10 @@ def get_args() -> argparse.Namespace:
     # optimize runtime
     parser_needle.add_argument("-nt","--threads",type=int, help='Number of threads to run in parallel.', default=1)
     parser_needle.add_argument("-nc","--chunks",type=int, help='Number of chunks to split the fasta file.', default=10)
+    parser_needle.add_argument("-pm", "--parallel-mode", type=str, help='Parallelization strategy to use.',
+                                choices=['multithread', 'multiprocess'], 
+                                default='multithread'
+                                )
     
     # customize needle
     parser_needle.add_argument('--gapopen','-gapopen', type=float, default=10, help='Passed to needle. See EMBOSS documentation.')

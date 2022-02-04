@@ -32,25 +32,25 @@ def get_len_dict(ids: List[str], seqs: List[str]) -> Dict[str,int]:
     return len_dict
 
 def parse_fasta(fastafile: str, sep='|') -> Tuple[List[str],List[str]]:
-	'''
+    '''
     Parses fasta file into lists of identifiers and sequences.
 	Can handle multi-line sequences and empty lines.
     Needleall seems to fail when a '|' is between the identifier and the rest of
     the fasta header, so we split the identifier and only return that.
 
     '''
-	ids = []
-	seqs = []
-	with open(fastafile, 'r') as f:
+    ids = []
+    seqs = []
+    with open(fastafile, 'r') as f:
 
-		id_seq_groups = (group for group in groupby(f, lambda line: line.startswith(">")))
+        id_seq_groups = (group for group in groupby(f, lambda line: line.startswith(">")))
 
-		for is_id, id_iter in id_seq_groups:
-			if is_id: # Only needed to find first id line, always True thereafter
-			    ids.append(next(id_iter).strip().split(sep)[0])
-			    seqs.append("".join(seq.strip() for seq in next(id_seq_groups)[1]))
+        for is_id, id_iter in id_seq_groups:
+            if is_id: # Only needed to find first id line, always True thereafter
+                ids.append(next(id_iter).strip().split(sep)[0])
+                seqs.append("".join(seq.strip() for seq in next(id_seq_groups)[1]))
         
-	return ids, seqs
+    return ids, seqs
 
 
 def chunk_fasta_file(ids: List[str], seqs: List[str], n_chunks: int) -> int:
@@ -292,6 +292,7 @@ def generate_edges_mp(entity_fp: str,
                   denominator: str = 'full',
                   n_chunks: int = 10,
                   n_procs: int = 4,
+                  parallel_mode: str = 'multithread',
                   triangular: bool = False,
                   delimiter: str = '|',
                   is_nucleotide: bool = False,
@@ -340,9 +341,12 @@ def generate_edges_mp(entity_fp: str,
 
     #pbar = tqdm(total= n_alignments)
 
-    
+    if parallel_mode == 'multithread':
+        executor_cls = concurrent.futures.ThreadPoolExecutor
+    elif parallel_mode == 'multiprocess':
+        executor_cls = concurrent.futures.ProcessPoolExecutor
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n_procs) as executor:
+    with executor_cls(max_workers=n_procs) as executor:
         for i in range(n_chunks):
             start = i if triangular else 0
             for j in range(start, n_chunks):
