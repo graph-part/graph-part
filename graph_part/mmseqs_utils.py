@@ -21,6 +21,7 @@ def generate_edges_mmseqs(entity_fp: str,
                   denominator: str = 'longest',
                   delimiter: str = '|',
                   is_nucleotide: bool = False,
+                  use_prefilter: bool = False,
                   ) -> None:
 
 
@@ -36,7 +37,7 @@ def generate_edges_mmseqs(entity_fp: str,
 
     # However, this function will not work with nucleotidenucleotide searches, 
     # since we need to have a valid diagonal for the banded alignment.
-    if is_nucleotide:
+    if is_nucleotide or use_prefilter:
         subprocess.run(['mmseqs', 'prefilter', '-s', '7.5', 'temp/seq_db', 'temp/seq_db', 'temp/pref'])
     else:
         subprocess.run(['mmseqs_fake_prefilter.sh', 'temp/seq_db', 'temp/seq_db', 'temp/pref', 'seq_db'])

@@ -34,8 +34,8 @@ The command `graphpart` will now be available on your command line.
 
 ## Instructions
 
-### Command line
-As an example, this is a basic command for partitioning a dataset at a maximum pairwise cross-partition identity of 30% into 5 folds. The resulting partitions are balanced for equal frequencies of the class labels specified in `label=` in the FASTA headers. `--threads` can be adapted according to your system and has no effect on the partitioning itself.
+### Command line interface for FASTA data
+As an example, this is a basic command for partitioning a dataset at a maximum pairwise cross-partition identity of 30% into 5 folds. The resulting partitions are balanced for equal frequencies of the class labels specified in `label=` in the [FASTA headers](#Input-format). `--threads` can be adapted according to your system and has no effect on the partitioning itself, it only affects the resource usage and processing speed.
 ```
 graphpart needle --fasta-file netgpi_dataset.fasta --threshold 0.3 --out-file graphpart_assignments.csv --labels-name label --partitions 5 --threads 12
 ```
@@ -44,8 +44,8 @@ Alternatively, a train-validation-test split of the data can be made instead of 
 ```
 graphpart needle --fasta-file netgpi_dataset.fasta --threshold 0.3 --out-file graphpart_assignments.csv --labels-name label --test-ratio 0.1 --val-ratio 0.05 --threads 12
 ```
-### Notebook
-A tutorial showcasing how to use Graph-Part from within Python is included at [tutorial.ipynb](tutorial.ipynb)
+### Python API
+A tutorial notebook showcasing how to use Graph-Part from within Python is included at [tutorial.ipynb](tutorial.ipynb). The tutorial also covers partitioning of small molecule data.
 
 
 ## Input format
@@ -96,12 +96,12 @@ Long                    | Short | Description
 `--threshold`           |`-th`  | The desired partitioning threshold, should be within the bounds defined by the metric.
 `--partitions`          |`-pa`  | Number of partitions to generate. Defaults to 5.
 `--transformation`      |`-tf`  | Transformation to apply to the similarity/distance metric. Graph-Part operates on distances, therefore similarity metrics need to be transformed. Can be any of `one-minus`, `inverse`, `square`, `log`, `None`. See the [source](graph_part/transformations.py) for definitions. As an example, when operating with sequence identities ranging from 0 to 1, the transformation `one-minus` yields corresponding distances. Defaults to `one-minus`.
-`--priority-name`       |`-pn`  | The name of the priority in the meta file. TODO what does this do
+`--priority-name`       |`-pn`  | The name of the retention priority in the meta file. Is either `=0` or `=1`. If specified, the algorithm first tries to reach the treshold by removing/moving low-priority (`0`) samples before proceeding to `1` samples.
 `--labels-name`         |`-ln`  | The name of the label in the meta file. Used for balancing partitions.
 `--initialization-mode` |`-im`  | Use either slow or fast restricted nearest neighbor linkage or no initialization. Can be any of `slow-nn`, `fast-nn`, `simple`. Defaults to `slow-nn`.
-`--no-moving`           |`-nm`  | By default, the removing procedure tries to relocate sequences to another partition if it finds more within-threshold neighbours in any. This flag disallows moving.
-`--remove-same`         |`-rs`  | This here is the inverse of removal_type (has default True), not sure what it does TODO
-`--save_checkpoint_path`|`-sc`  | Optional path to save the computed identities above the chosen threshold as an edge list. Can be used to quickstart runs in the `precomputed` mode. Defaults to `None` with no file saved.
+`--no-moving`           |`-nm`  | By default, the removing procedure tries to relocate sequences to another partition if it finds more within-threshold neighbours in any. This flag disallows moving. In high-redundancy datasets, moving can lead to imbalanced partitions and should be disabled.
+`--remove-same`         |`-rs`  | This here is the inverse of removal_type (has default True), not sure what it does TODO @Magnus can you describe it in one sentence?
+`--save-checkpoint-path`|`-sc`  | Optional path to save the computed identities above the chosen threshold as an edge list. Can be used to quickstart runs in the `precomputed` mode. Defaults to `None` with no file saved.
 `--test-ratio`          | `-te` | Make a train-val-test split instead of partitions for cross-validation. Overrides `--partitions` when specified. Defaults to 0. Needs to be a multiple of 0.05.
 `--val-ratio`           | `-va` |Make a train-val-test split instead of partitions for cross-validation. Overrides `--partitions` when specified. Defaults to 0. Needs to be a multiple of 0.05.
 
@@ -112,6 +112,7 @@ Long                    | Short | Description
 `--denominator`         |`-dn`  | Denominator to use for percent sequence identity computation. The number of perfect matching positions is divided by the result of this operation. Can be any of `shortest`, `longest`, `mean`, `full`, `no_gaps`. The first three options are computed from the original lengths of the aligned sequences. `full` refers to the full length of the alignment, including gaps, and is the default. `no_gaps` subtracts gaps from the full alignment length.
 `--threads`             |`-nt`  | The number of threads to run in parallel. If `-1`, will use all available resources. Defaults to 1.
 `--chunks`              |`-nc`  | The number of chunks into which to split the fasta file for multithreaded alignment. Defaults to 10.
+`--parallel-mode`       |`-pm`  | The Python parallelization strategy to use. `multithread` or `multiprocess`. Multiprocessing is potentially faster (especially for short sequences), but increases memory usage.
 `--nucleotide`          |`-nu`  | Use this flag if the input contains nucleotide sequences. By default, assumes proteins.
 `--triangular`          |`-tr`  | Only compute triangular of the full distance matrix. Twice as fast, but can yield slightly different results if an alignment has two different solutions with the same score, but different identities.
 `--gapopen`             |`-gapopen`     | [10.0 for any sequence] The gap open penalty is the score taken away when a gap is created. The best value depends on the choice of comparison matrix. The default value assumes you are using the EBLOSUM62 matrix. (Floating point number from 1.0 to 100.0)
@@ -128,7 +129,7 @@ Long                    | Short | Description
 Long                    | Short | Description
 ------------------------|-------|------------
 `--nucleotide`          |`-nu`  | Use this flag if the input contains nucleotide sequences. By default, assumes proteins. Use with caution! Not guaranteed to compute all pairwise alignments.
-
+`--prefilter`           |`-pr`  | Use MMseqs2 prefiltering at the highest sensitivity instead of forcing computation of all-vs-all alignments.
 
 #### precomputed  
   
@@ -146,11 +147,3 @@ WIP
 - **I want to test multiple thresholds and partitioning parameters - How can I do this efficiently ?**  
 When constructing the graph, we only retain identities that are larger than the selected `threshold`, as only those form relevant edges for partitioning the data. All other similarities are discarded as they are computed. To test multiple thresholds, the most efficient way is to first try the lowest threshold to be considered and save the edge list by specifying `--save-checkpoint-path EDGELIST.csv`. In the next run, use `graph-part precomputed -ef EDGELIST.csv` to start directly from the previous alignment result.
 
-
-## TODO
-
-- Fix alignment of header in removal output - this seems to happen with large Connectivity values:  
-```
-Min-threshold    #Entities       #Edges          Connectivity    #Problematics   #Relocated      #To-be-removed  
-0.01             3539            411624                  460915                  3517            1856            1  
-```

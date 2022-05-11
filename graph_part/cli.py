@@ -107,6 +107,10 @@ def get_args() -> argparse.Namespace:
     # optimize runtime
     parser_needle.add_argument("-nt","--threads",type=int, help='Number of threads to run in parallel.', default=1)
     parser_needle.add_argument("-nc","--chunks",type=int, help='Number of chunks to split the fasta file.', default=10)
+    parser_needle.add_argument("-pm", "--parallel-mode", type=str, help='Parallelization strategy to use.',
+                                choices=['multithread', 'multiprocess'], 
+                                default='multithread'
+                                )
     
     # customize needle
     parser_needle.add_argument('--gapopen','-gapopen', type=float, default=10, help='Passed to needle. See EMBOSS documentation.')
@@ -119,6 +123,7 @@ def get_args() -> argparse.Namespace:
 
     # 4. Arguments that are only required with mmseqs2.
     parser_mmseqs2.add_argument("-nu","--nucleotide", action='store_true', help= 'Input contains nucleotide sequences (Default is proteins).')
+    parser_mmseqs2.add_argument("-pr","--prefilter", action='store_true', help= 'Use the mmseqs2 prefiltering procedure instead of forcing all-vs-all alignments.')
     parser_mmseqs2.add_argument("-dn","--denominator",type=str, help='Denominator to use for sequence identity computation.', 
                         choices=['shortest', 'longest', 'n_aligned'], 
                         default='shortest',

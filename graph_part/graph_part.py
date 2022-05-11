@@ -453,7 +453,7 @@ def make_graphs_from_sequences(config: Dict[str, Any], threshold: float, json_di
 
     elif config['alignment_mode'] == 'mmseqs2':
         from .mmseqs_utils import generate_edges_mmseqs
-        generate_edges_mmseqs(config['fasta_file'], full_graph, config['transformation'], threshold, config['threshold'], denominator=config['denominator'], delimiter='|', is_nucleotide=config['nucleotide'])
+        generate_edges_mmseqs(config['fasta_file'], full_graph, config['transformation'], threshold, config['threshold'], denominator=config['denominator'], delimiter='|', is_nucleotide=config['nucleotide'], use_prefilter=config['prefilter'])
         elapsed_align = time.perf_counter() - json_dict['time_script_start'] 
         if verbose:
             print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")    
@@ -461,7 +461,7 @@ def make_graphs_from_sequences(config: Dict[str, Any], threshold: float, json_di
     elif config['alignment_mode'] == 'needle' and config['threads']>1:
         from .needle_utils import generate_edges_mp
         print('Computing pairwise sequence identities.')
-        generate_edges_mp(config['fasta_file'], full_graph, config['transformation'], threshold, denominator=config['denominator'], n_chunks=config['chunks'], n_procs=config['threads'], triangular=config['triangular'], delimiter='|', 
+        generate_edges_mp(config['fasta_file'], full_graph, config['transformation'], threshold, denominator=config['denominator'], n_chunks=config['chunks'], n_procs=config['threads'], parallel_mode=config['parallel_mode'], triangular=config['triangular'], delimiter='|', 
                             is_nucleotide=config['nucleotide'], gapopen=config['gapopen'], gapextend=config['gapextend'], endweight=config['endweight'], endopen=config['endopen'], endextend=config['endextend'], matrix=config['matrix'])
         elapsed_align = time.perf_counter() - json_dict['time_script_start'] 
         if verbose:
