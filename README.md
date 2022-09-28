@@ -1,5 +1,5 @@
 # Graph-Part
-Protein dataset partitioning pipeline (Gíslason 2021)
+Biological sequence dataset partitioning pipeline
 
 Graph-Part is a Python package for generating partitions (i.e. train-test splits) of biological sequence datasets. It ensures minimal homology between different partitions, while balancing partitions for labels or other desired criteria.
 
@@ -100,7 +100,7 @@ Long                    | Short | Description
 `--labels-name`         |`-ln`  | The name of the label in the meta file. Used for balancing partitions.
 `--initialization-mode` |`-im`  | Use either slow or fast restricted nearest neighbor linkage or no initialization. Can be any of `slow-nn`, `fast-nn`, `simple`. Defaults to `slow-nn`.
 `--no-moving`           |`-nm`  | By default, the removing procedure tries to relocate sequences to another partition if it finds more within-threshold neighbours in any. This flag disallows moving. In high-redundancy datasets, moving can lead to imbalanced partitions and should be disabled.
-`--remove-same`         |`-rs`  | This here is the inverse of removal_type (has default True), not sure what it does TODO @Magnus can you describe it in one sentence?
+`--remove-same`         |`-rs`  | This here is the inverse of removal_type (has default True) DO @Magnus can you describe it in one sentence?
 `--save-checkpoint-path`|`-sc`  | Optional path to save the computed identities above the chosen threshold as an edge list. Can be used to quickstart runs in the `precomputed` mode. Defaults to `None` with no file saved.
 `--test-ratio`          | `-te` | Make a train-val-test split instead of partitions for cross-validation. Overrides `--partitions` when specified. Defaults to 0. Needs to be a multiple of 0.05.
 `--val-ratio`           | `-va` |Make a train-val-test split instead of partitions for cross-validation. Overrides `--partitions` when specified. Defaults to 0. Needs to be a multiple of 0.05.
@@ -140,7 +140,7 @@ Long                    | Short | Description
 `--metric-column`       |`-mc`  | Specifies in which column the metric is found. Indexing starts at 0, defaults to 2 when left unspecified.
 
 ## FAQ
-WIP
+
 - **How should I pick `chunks` ?**  
 `chunks` should be picked so that all `threads` are utilized. Each chunk is aligned to each other chunk, so `threads` <= `chunks`*`chunks` results in full utilization.
 
