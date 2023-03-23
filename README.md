@@ -1,20 +1,20 @@
 # Graph-Part
 Biological sequence dataset partitioning pipeline
 
-Graph-Part is a Python package for generating partitions (i.e. train-test splits) of biological sequence datasets. It ensures minimal homology between different partitions, while balancing partitions for labels or other desired criteria.
+Graph-Part is a Python package for generating partitions (i.e. train-test splits, or splits for cross-validation) of biological sequence datasets. It ensures minimal homology between different partitions, while balancing partitions for labels or other desired criteria.
 
 ## Test installation
 ```
 conda install -c bioconda emboss
-git clone https://github.com/fteufel/graph-part.git
+git clone https://github.com/graph-part/graph-part.git
 cd graph-part
 pip install .
 ```
 
 ## Installation
 
-Graph-Part relies on [needleall](https://www.bioinformatics.nl/cgi-bin/emboss/help/needleall) from the [EMBOSS](http://emboss.sourceforge.net/) package for fast Needleman-Wunsch alignments of sequences. Please refer to the official EMBOSS documentation for installation methods.
-Additionally, Graph-Part can use [MMseqs2](https://github.com/soedinglab/MMseqs2) for alignments.
+Graph-Part relies on [needleall](https://www.bioinformatics.nl/cgi-bin/emboss/help/needleall) from the [EMBOSS](http://emboss.sourceforge.net/) package for Needleman-Wunsch alignments of sequences. Please refer to the official EMBOSS documentation for installation methods.
+Additionally, Graph-Part supports [MMseqs2](https://github.com/soedinglab/MMseqs2) for alignments. To use other algorithms that compute pairwise similarity measures, please refer to the `precomputed` mode.
 
 We recommend to install Graph-Part in a conda environment, and install EMBOSS from [bioconda](https://anaconda.org/bioconda/emboss). The same goes for [MMseqs2](https://anaconda.org/bioconda/mmseqs2).
 ```
@@ -128,15 +128,16 @@ Long                    | Short | Description
   
 Long                    | Short | Description
 ------------------------|-------|------------
+`--denominator`         |`-dn`  | Denominator to use for percent sequence identity computation. The number of perfect matching positions is divided by the result of this operation. Can be any of `shortest`, `longest`, `n_aligned`. `n_aligned` is the length of the alignment. Use this with caution, as GraphPart doesn't use coverage controls in the mmseqs2 mode. Defaults to `shortest`.
 `--nucleotide`          |`-nu`  | Use this flag if the input contains nucleotide sequences. By default, assumes proteins. Use with caution! Not guaranteed to compute all pairwise alignments.
 `--prefilter`           |`-pr`  | Use MMseqs2 prefiltering at the highest sensitivity instead of forcing computation of all-vs-all alignments.
 
 #### precomputed  
   
-    
+
 Long                    | Short | Description
 ------------------------|-------|------------
-`--edge-file`           |`-ef`  | Path to a comma separated file containing precomputed pairwise metrics, the first two columns should contain sequence identifiers specified in the  `--fasta-file`. This is can be used to run Graph-Part with an alignment tool different from the default `needleall`.
+`--edge-file`           |`-ef`  | Path to a comma separated file containing precomputed pairwise metrics, the first two columns should contain sequence identifiers specified in the  `--fasta-file`. This is can be used to run Graph-Part with an alignment tool different from the default `needleall` and `mmseqs`.
 `--metric-column`       |`-mc`  | Specifies in which column the metric is found. Indexing starts at 0, defaults to 2 when left unspecified.
 
 ## FAQ
