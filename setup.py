@@ -1,13 +1,11 @@
 import os
 from setuptools import setup, find_packages
 
-PATH_ROOT = os.path.dirname(__file__)
 
-
-with open(os.path.join(PATH_ROOT, "README.md")) as f:
+with open(os.path.join("README.md")) as f:
     readme = f.read()
 
-with open(os.path.join(PATH_ROOT, "requirements.txt")) as f:
+with open(os.path.join("requirements.txt")) as f:
     requirements = f.read()
 
 
@@ -19,9 +17,8 @@ setup(
     description="Graph-based partitioning of biological sequence data",
     long_description=readme,
     long_description_content_type="text/markdown",
-    url="healthtech.dtu.dk",
+    url="https://healthtech.dtu.dk",
     author="F. Teufel and M.H. Gislason",
-    author_email="felix.teufel@bio.ku.dk",
     packages=['graph_part'],
     python_requires=">=3.6, <4",
     install_requires=requirements,
