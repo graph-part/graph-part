@@ -5,8 +5,12 @@ from setuptools import setup, find_packages
 with open(os.path.join("README.md")) as f:
     readme = f.read()
 
-with open(os.path.join("requirements.txt")) as f:
-    requirements = f.read()
+requirements = [
+    "numpy>=1.19.5",
+    "networkx>=2.5.1",
+    "tqdm>=4.62.3",
+    "pandas>=1.1.5"
+]
 
 
 
