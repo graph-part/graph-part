@@ -1,22 +1,15 @@
-# Graph-Part
+# GraphPart
 Biological sequence dataset partitioning pipeline
 
 Graph-Part is a Python package for generating partitions (i.e. train-test splits, or splits for cross-validation) of biological sequence datasets. It ensures minimal homology between different partitions, while balancing partitions for labels or other desired criteria.
 
-## Test installation
-```
-conda install -c bioconda emboss
-git clone https://github.com/graph-part/graph-part.git
-cd graph-part
-pip install .
-```
 
 ## Installation
 
-Graph-Part relies on [needleall](https://www.bioinformatics.nl/cgi-bin/emboss/help/needleall) from the [EMBOSS](http://emboss.sourceforge.net/) package for Needleman-Wunsch alignments of sequences. Please refer to the official EMBOSS documentation for installation methods.
-Additionally, Graph-Part supports [MMseqs2](https://github.com/soedinglab/MMseqs2) for alignments. To use other algorithms that compute pairwise similarity measures, please refer to the `precomputed` mode.
+GraphPart relies on [needleall](https://www.bioinformatics.nl/cgi-bin/emboss/help/needleall) from the [EMBOSS](http://emboss.sourceforge.net/) package for Needleman-Wunsch alignments of sequences. Please refer to the official EMBOSS documentation for installation methods.
+Additionally, GraphPart supports [MMseqs2](https://github.com/soedinglab/MMseqs2) for alignments. To use other algorithms that compute pairwise similarity measures, please refer to the `precomputed` mode.
 
-We recommend to install Graph-Part in a conda environment, and install EMBOSS from [bioconda](https://anaconda.org/bioconda/emboss). The same goes for [MMseqs2](https://anaconda.org/bioconda/mmseqs2).
+We recommend to install GraphPart in a conda environment, and install EMBOSS from [bioconda](https://anaconda.org/bioconda/emboss). The same goes for [MMseqs2](https://anaconda.org/bioconda/mmseqs2).
 ```
 conda install -c bioconda emboss
 
@@ -26,11 +19,20 @@ conda install -c conda-forge -c bioconda mmseqs2
 
 Alternatively, on Ubuntu, EMBOSS is available directly via `sudo apt-get install emboss` .
 
-To install Graph-Part, run
+To install GraphPart, run
 ```
-pip install graphpart
+pip install graph-part
 ```
 The command `graphpart` will now be available on your command line.
+
+
+Alternatively, you can install GraphPart from source:
+```
+conda install -c bioconda emboss
+git clone https://github.com/graph-part/graph-part.git
+cd graph-part
+pip install .
+```
 
 ## Instructions
 
@@ -45,23 +47,23 @@ Alternatively, a train-validation-test split of the data can be made instead of 
 graphpart needle --fasta-file netgpi_dataset.fasta --threshold 0.3 --out-file graphpart_assignments.csv --labels-name label --test-ratio 0.1 --val-ratio 0.05 --threads 12
 ```
 ### Python API
-A tutorial notebook showcasing how to use Graph-Part from within Python is included at [tutorial.ipynb](tutorial.ipynb). The tutorial also covers partitioning of small molecule data.
+A tutorial notebook showcasing how to use GraphPart from within Python is included at [tutorial.ipynb](tutorial.ipynb). The tutorial also covers partitioning of small molecule data.
 
 
 ## Input format
-Graph-Part works on FASTA files with a custom header format, e.g.
+GraphPart works on FASTA files with a custom header format, e.g.
 ```
 >P42098|label=CLASSA|priority=0
 MAPSWRFFVCFLLWGGTELCSPQPVWQDEGQRLRPSKPPTVMVECQEAQLVVIVSKDLFGTGKLIRPADL
 >P0CL66|label=CLASSB|priority=1
 MKKYLLGIGLILALIACKQNVSSLDEKNSVSVDLPGEMKVLVSKEKNKDGKYDLIATVDKLELKGTSDKN
 ```
-Alternatively , ":" and "&nbsp;-&nbsp;" (note there are spaces on either side of the `-`) can be used as separators instead of "|". It should be taken care that the sequence identifiers themselves contain no separator symbols. The keywords `label` and `priority` can be customized by specifying the `--labels-name` and `--priority-name` arguments. Both elements of the header are optional, Graph-Part can also just partition based on sequences alone, without any class balancing.   
+Alternatively , ":" and "&nbsp;-&nbsp;" (note there are spaces on either side of the `-`) can be used as separators instead of "|". It should be taken care that the sequence identifiers themselves contain no separator symbols. The keywords `label` and `priority` can be customized by specifying the `--labels-name` and `--priority-name` arguments. Both elements of the header are optional, GraphPart can also just partition based on sequences alone, without any class balancing.   
 You can find a script to convert `.csv` datasets into the custom `.fasta` format at [csv_to_fasta.py](csv_to_fasta.py)
 
 ## Output format
 
-Graph-Part produces a `.csv` file that contains the cluster assignment for each sequence. Column `cluster` contains the partition number. Removed sequences are not contained in the output file.
+GraphPart produces a `.csv` file that contains the cluster assignment for each sequence. Column `cluster` contains the partition number. Removed sequences are not contained in the output file.
 ```
 AC,priority,label-val,between_connectivity,cluster
 P42098,False,0,0,0.0
@@ -95,7 +97,7 @@ Long                    | Short | Description
 `--out-file`            |`-of`  | Path at which to save the partition assignments as `.csv`. Defaults to `graphpart_result.csv`.
 `--threshold`           |`-th`  | The desired partitioning threshold, should be within the bounds defined by the metric.
 `--partitions`          |`-pa`  | Number of partitions to generate. Defaults to 5.
-`--transformation`      |`-tf`  | Transformation to apply to the similarity/distance metric. Graph-Part operates on distances, therefore similarity metrics need to be transformed. Can be any of `one-minus`, `inverse`, `square`, `log`, `None`. See the [source](graph_part/transformations.py) for definitions. As an example, when operating with sequence identities ranging from 0 to 1, the transformation `one-minus` yields corresponding distances. Defaults to `one-minus`.
+`--transformation`      |`-tf`  | Transformation to apply to the similarity/distance metric. GraphPart operates on distances, therefore similarity metrics need to be transformed. Can be any of `one-minus`, `inverse`, `square`, `log`, `None`. See the [source](graph_part/transformations.py) for definitions. As an example, when operating with sequence identities ranging from 0 to 1, the transformation `one-minus` yields corresponding distances. Defaults to `one-minus`.
 `--priority-name`       |`-pn`  | The name of the retention priority in the meta file. Is either `=0` or `=1`. If specified, the algorithm first tries to reach the treshold by removing/moving low-priority (`0`) samples before proceeding to `1` samples.
 `--labels-name`         |`-ln`  | The name of the label in the meta file. Used for balancing partitions.
 `--initialization-mode` |`-im`  | Use either slow or fast restricted nearest neighbor linkage or no initialization. Can be any of `slow-nn`, `fast-nn`, `simple`. Defaults to `slow-nn`.
@@ -137,7 +139,7 @@ Long                    | Short | Description
 
 Long                    | Short | Description
 ------------------------|-------|------------
-`--edge-file`           |`-ef`  | Path to a comma separated file containing precomputed pairwise metrics, the first two columns should contain sequence identifiers specified in the  `--fasta-file`. This is can be used to run Graph-Part with an alignment tool different from the default `needleall` and `mmseqs`.
+`--edge-file`           |`-ef`  | Path to a comma separated file containing precomputed pairwise metrics, the first two columns should contain sequence identifiers specified in the  `--fasta-file`. This is can be used to run GraphPart with an alignment tool different from the default `needleall` and `mmseqs`.
 `--metric-column`       |`-mc`  | Specifies in which column the metric is found. Indexing starts at 0, defaults to 2 when left unspecified.
 
 ## FAQ
@@ -146,5 +148,5 @@ Long                    | Short | Description
 `chunks` should be picked so that all `threads` are utilized. Each chunk is aligned to each other chunk, so `threads` <= `chunks`*`chunks` results in full utilization.
 
 - **I want to test multiple thresholds and partitioning parameters - How can I do this efficiently ?**  
-When constructing the graph, we only retain identities that are larger than the selected `threshold`, as only those form relevant edges for partitioning the data. All other similarities are discarded as they are computed. To test multiple thresholds, the most efficient way is to first try the lowest threshold to be considered and save the edge list by specifying `--save-checkpoint-path EDGELIST.csv`. In the next run, use `graph-part precomputed -ef EDGELIST.csv` to start directly from the previous alignment result.
+When constructing the graph, we only retain identities that are larger than the selected `threshold`, as only those form relevant edges for partitioning the data. All other similarities are discarded as they are computed. To test multiple thresholds, the most efficient way is to first try the lowest threshold to be considered and save the edge list by specifying `--save-checkpoint-path EDGELIST.csv`. In the next run, use `graphpart precomputed -ef EDGELIST.csv` to start directly from the previous alignment result.
 

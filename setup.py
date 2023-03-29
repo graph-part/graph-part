@@ -17,7 +17,7 @@ requirements = [
 
 setup(
     name="graph-part",
-    version='1.0',
+    version='0.1.2',
     description="Graph-based partitioning of biological sequence data",
     long_description=readme,
     long_description_content_type="text/markdown",
