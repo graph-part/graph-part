@@ -4,7 +4,7 @@ on: push
 
 env:
     BIOLIB_LOG: debug
-    BIOLIB_PROJECT_URI: ATGACCGATCGCAGTCGA/GraphPart
+    BIOLIB_PROJECT_URI: KU/GraphPart
     LOCAL_DOCKER_TAG: graph-part-docker:latest
 
 jobs:

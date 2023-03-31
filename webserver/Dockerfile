@@ -6,6 +6,7 @@ COPY graph_part graph_part
 COPY setup.py .
 COPY README.md .
 COPY webserver/requirements.txt .
+COPY benchmarking/data/protein/NetGPI/netgpi_dataset.fasta sample.fasta
 #RUN conda install -c anaconda python=3.8
 RUN pip install --no-cache-dir .
 RUN conda install -c bioconda emboss
