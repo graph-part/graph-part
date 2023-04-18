@@ -1,8 +1,9 @@
 # GraphPart
-Biological sequence dataset partitioning pipeline
+Biological sequence dataset partitioning method
 
 Graph-Part is a Python package for generating partitions (i.e. train-test splits, or splits for cross-validation) of biological sequence datasets. It ensures minimal homology between different partitions, while balancing partitions for labels or other desired criteria.
 
+Preprint: https://www.biorxiv.org/content/10.1101/2023.04.14.536886v1
 
 ## Installation
 
@@ -141,6 +142,12 @@ Long                    | Short | Description
 ------------------------|-------|------------
 `--edge-file`           |`-ef`  | Path to a comma separated file containing precomputed pairwise metrics, the first two columns should contain sequence identifiers specified in the  `--fasta-file`. This is can be used to run GraphPart with an alignment tool different from the default `needleall` and `mmseqs`.
 `--metric-column`       |`-mc`  | Specifies in which column the metric is found. Indexing starts at 0, defaults to 2 when left unspecified.
+
+## Citation
+
+GraphPart: Homology partitioning for biological sequence analysis
+Felix Teufel, Magnús Halldór Gíslason, José Juan Almagro Armenteros, Alexander Rosenberg Johansen, Ole Winther, Henrik Nielsen
+bioRxiv 2023.04.14.536886; doi: https://doi.org/10.1101/2023.04.14.536886
 
 ## FAQ
 
