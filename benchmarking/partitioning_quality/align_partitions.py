@@ -11,6 +11,7 @@ from typing import List, Dict, Tuple
 from itertools import groupby
 import concurrent.futures
 import math
+from tempfile import TemporaryDirectory
 
 NORMALIZATIONS = {'shortest': lambda a,b,c: a/min(b,c), # a identity b len(seq1) c len(seq2)
                   'longest': lambda a,b,c: a/max(b,c),
@@ -18,7 +19,7 @@ NORMALIZATIONS = {'shortest': lambda a,b,c: a/min(b,c), # a identity b len(seq1)
                   }
 
 
-def partition_fasta_file(fasta_file: str, partition_file: str, sep='|') -> Tuple[int, Dict[str, int]]:
+def partition_fasta_file(fasta_file: str, partition_file: str, sep='|', directory=None) -> Tuple[int, Dict[str, int]]:
     '''
     Make a temporary fasta file for each individual partition, given the .csv assignments.
     Also return the number of partitions and the sequence lengths for convenience, so we don't have to 
@@ -45,14 +46,15 @@ def partition_fasta_file(fasta_file: str, partition_file: str, sep='|') -> Tuple
     
     for idx, cl in enumerate(df['cluster'].unique()):
         acc_ids = df.loc[df['cluster'] == cl]['AC']
-        with open(f'partition_{idx}.fasta.tmp', 'w') as f:
+        out_path = f'partition_{idx}.fasta.tmp' if directory is None else f'{directory}/partition_{idx}.fasta.tmp'
+        with open(out_path, 'w') as f:
             for acc_id in acc_ids:
                 f.write(f'>{acc_id}\n')
                 f.write(seq_dict[acc_id]+'\n')
     return idx + 1, seq_lens
 
 
-def chunk_fasta_file(fasta_file: str, n_chunks: int, prefix: str = 'chunk', sep: str = '|') -> int:
+def chunk_fasta_file(fasta_file: str, n_chunks: int, prefix: str = 'chunk', sep: str = '|', directory=None) -> int:
     '''
     Break up fasta file into multiple smaller files that can be
     used for multiprocessing.
@@ -84,7 +86,8 @@ def chunk_fasta_file(fasta_file: str, n_chunks: int, prefix: str = 'chunk', sep:
         chunk_ids = ids[i*chunk_size:(i+1)*chunk_size]
         chunk_seqs = seqs[i*chunk_size:(i+1)*chunk_size]
 
-        with open(f'{prefix}_{i}.fasta.tmp', 'w') as f:
+        out_path = f'{prefix}_{i}.fasta.tmp' if directory is None else f'{directory}/{prefix}_{i}.fasta.tmp'
+        with open(out_path, 'w') as f:
             for id, seq in zip(chunk_ids, chunk_seqs):
                 f.write(id+'\n')
                 f.write(seq+'\n')
@@ -202,43 +205,44 @@ def align_partitions(fasta_file: str,
     any other partition.
     '''
     # Make partition files.
-    print('Writing temporary fasta files...')
-    n_partitions, seq_lens = partition_fasta_file(fasta_file, partition_file)
+    with TemporaryDirectory() as tmp_dir:
+        print('Writing temporary fasta files...')
+        n_partitions, seq_lens = partition_fasta_file(fasta_file, partition_file, directory=tmp_dir)
 
-    results_dict = {} # Acc: [max_id, Acc]
+        results_dict = {} # Acc: [max_id, Acc]
 
-    part_size = len(seq_lens) // n_partitions
-    print('Aligning all partitions...')
-    # this is still wrong, we would need to count the actual number of seqs in each partition
-    # like that its just an upper bound.
-    pbar = tqdm(total=part_size*part_size*(n_partitions*n_partitions - n_partitions)) #inner complexity x nested for loops.
-    jobs = []
-    
-    with concurrent.futures.ThreadPoolExecutor(max_workers=n_procs) as executor:
-        for query_partition in range(n_partitions):
-            for lib_partition in range(n_partitions):
-                if query_partition == lib_partition:
-                    continue
-                else:
-                    q = f'partition_{query_partition}.fasta.tmp'
-                    l = f'partition_{lib_partition}.fasta.tmp'
+        part_size = len(seq_lens) // n_partitions
+        print('Aligning all partitions...')
+        # this is still wrong, we would need to count the actual number of seqs in each partition
+        # like that its just an upper bound.
+        pbar = tqdm(total=part_size*part_size*(n_partitions*n_partitions - n_partitions)) #inner complexity x nested for loops.
+        jobs = []
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=n_procs) as executor:
+            for query_partition in range(n_partitions):
+                for lib_partition in range(n_partitions):
+                    if query_partition == lib_partition:
+                        continue
+                    else:
+                        q = f'partition_{query_partition}.fasta.tmp'
+                        l = f'partition_{lib_partition}.fasta.tmp'
 
-                    # chunk one of the files to max out threads.
-                    # otherwise, can at max use (n_partitions x n_partitions) - n_partitions threads.
-                    n_chunks = chunk_fasta_file(q, n_chunks=10, prefix=f'chunk_p_{query_partition}')
-                    for i in range(n_chunks):
-                        q_c = f'chunk_p_{query_partition}_{i}.fasta.tmp'
-                        future = executor.submit(compute_edges, q_c, l, results_dict, seq_lens, pbar, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)
-                        jobs.append(future)
+                        # chunk one of the files to max out threads.
+                        # otherwise, can at max use (n_partitions x n_partitions) - n_partitions threads.
+                        n_chunks = chunk_fasta_file(q, n_chunks=10, prefix=f'chunk_p_{query_partition}', directory=tmp_dir)
+                        for i in range(n_chunks):
+                            q_c = f'chunk_p_{query_partition}_{i}.fasta.tmp'
+                            future = executor.submit(compute_edges, q_c, l, results_dict, seq_lens, pbar, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)
+                            jobs.append(future)
 
 
-    for x in os.listdir():
-        if 'chunk_p_' in x:
-                os.remove(x)
+        # for x in os.listdir():
+        #     if 'chunk_p_' in x:
+        #             os.remove(x)
 
-    for i in range(n_partitions):
-        os.remove(f'partition_{i}.fasta.tmp')
-    return results_dict
+        # for i in range(n_partitions):
+        #     os.remove(f'partition_{i}.fasta.tmp')
+        return results_dict
 
 
 
