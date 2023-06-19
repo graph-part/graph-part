@@ -6,7 +6,7 @@ import shutil
 from typing import List, Tuple, Dict
 import pathlib
 import numpy as np
-
+from tqdm.auto import tqdm
 
 
 def partition_assignment(cluster_vector : np.array, kingdom_vector: np.array, label_vector: np.array, n_partitions: int, n_class: int, n_kingdoms: int) -> np.array:
@@ -28,7 +28,7 @@ def partition_assignment(cluster_vector : np.array, kingdom_vector: np.array, la
     
     processed_clusters = 1
     n_clusters = u_cluster.shape[0]
-    for i in u_cluster:
+    for i in tqdm(u_cluster, desc='Assigning clusters'):
         #if i % 100 == 0:
         #    logger.info(f'Processing cluster {processed_clusters}/{n_clusters}')
         processed_clusters +=1

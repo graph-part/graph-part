@@ -9,6 +9,8 @@ from collections import Counter
 from itertools import product
 import time
 
+from tqdm import tqdm
+
 from .transformations import TRANSFORMATIONS
 from .train_val_test_split import train_val_test_split
 
@@ -183,7 +185,7 @@ def partition_data(full_graph: nx.classes.graph.Graph,
     print("Initialization mode", mode)
 
     ## Initialize the initialization
-    for ind, AC in enumerate(part_graph.nodes()):
+    for ind, AC in tqdm(enumerate(part_graph.nodes()), desc='Initializing'):
         label_counts = np.zeros(len(label_limits), dtype=int)
         label_counts[full_graph.nodes[AC]['label-val']] = 1
         cluster_nr = ind
@@ -204,7 +206,38 @@ def partition_data(full_graph: nx.classes.graph.Graph,
     ## Restricted closest neighbour linkage
     if mode in ['slow-nn', 'fast-nn']:
         ## Linking entities, if restrictions allow
-        for qry, lib, data in sorted(full_graph.edges(data=True), key=lambda x: x[2]['metric']):
+
+
+        # NOTE sorting the networkx edges using sorted() becomes extremely slow on large graphs.
+        # partly, because .edges takes forever to yield its EdgeView
+        # workaround by instead extracting all the metric values into a numpy vector and argsorting this.
+        # tested on ~400m edges, np.argsort 10 min vs. sorted() multiple hours
+        queries = []
+        libs = []
+        metrics = []
+                
+        start = time.perf_counter()
+
+        for qry, lib, data in full_graph.edges(data=True):
+            queries.append(qry)
+            libs.append(lib)
+            metrics.append(data['metric'])
+
+        elapsed_align = time.perf_counter() - start
+        print(f"Edge iteration completed in {elapsed_align:0.2f} seconds.")
+        
+        
+        metrics = np.array(metrics)
+        inds = np.argsort(metrics)
+        elapsed_align = time.perf_counter() - start
+        print(f"Edge sorting competed at {elapsed_align:0.2f} seconds.")
+        for idx in tqdm(inds, desc='clustering'):
+            qry, lib = queries[idx], libs[idx]
+            data = full_graph.edges[qry, lib]
+
+            ### continue as below
+
+        # for qry, lib, data in tqdm(sorted(full_graph.edges(data=True), key=lambda x: x[2]['metric']), desc='Clustering'):
             if data['metric'] > threshold:
                 ## No need to continue if threshold reached.
                 break
@@ -238,9 +271,9 @@ def partition_data(full_graph: nx.classes.graph.Graph,
                 nx.set_node_attributes(part_graph, {descendant:attr})
 
             count += 1
-            if count % 10000 == 0:
-                print("edges:", part_graph.number_of_edges()) 
-                print (attr, data)
+            #if count % 10000 == 0:
+            #    print("edges:", part_graph.number_of_edges()) 
+            #    print (attr, data)
         #with open('graph_part_miniclusters.txt','w+') as outf:
         for cc_nr, cc in enumerate(nx.connected_components(part_graph)):
             for n in cc:
@@ -475,6 +508,34 @@ def make_graphs_from_sequences(config: Dict[str, Any], threshold: float, json_di
         elapsed_align = time.perf_counter() - json_dict['time_script_start'] 
         if verbose:
             print(f"Pairwise alignment executed in {elapsed_align:0.2f} seconds.")
+
+    elif config['alignment_mode'] == 'mmseqs2needle':
+        from .mmseqs_needle_combined_utils import generate_edges_mmseqs_needle_combined
+        recompute_threshold = TRANSFORMATIONS[config['transformation']](config['recompute_threshold'])
+        print('Computing pairwise sequence identities.')
+        generate_edges_mmseqs_needle_combined(
+            config['fasta_file'],
+            full_graph,
+            transformation=config['transformation'],
+            threshold=threshold,
+            recompute_threshold=recompute_threshold,
+            denominator_needle=config['denominator_needle'],
+            denominator_mmseqs=config['denominator_mmseqs'],
+            n_procs=config['threads'],
+            parallel_mode=config['parallel_mode'],
+            triangular=config['triangular'],
+            delimiter='|',
+            is_nucleotide=config['nucleotide'],
+            use_prefilter=config['prefilter'],
+            gapopen=config['gapopen'],
+            gapextend=config['gapextend'],
+            endweight=config['endweight'],
+            endopen=config['endopen'],
+            endextend=config['endextend'],
+            matrix=config['matrix']
+        )
+        # generate_edges_mmseqs_needle_combined(config['fasta_file'], full_graph, config['transformation'], threshold, recompute_threshold, config['threshold'], denominator_needle=config['denominator_needle'], denominator_mmseqs=config['denominator_mmseqs'], n_procs=config['threads'], parallel_mode=config['parallel_mode'], triangular=config['triangular'], delimiter='|', 
+                                            #   is_nucleotide=config['nucleotide'], use_prefilter=config['prefilter'], gapopen=config['gapopen'], gapextend=config['gapextend'], endweight=config['endweight'], endopen=config['endopen'], endextend=config['endextend'], matrix=config['matrix'])
 
     else:
         raise NotImplementedError('Encountered unspecified alignment mode. This should never happen.')

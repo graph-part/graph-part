@@ -8,7 +8,7 @@ import pathlib
 import numpy as np
 
 # not python 3.9 yet.
-def removesuffix(self: str, suffix: str, /) -> str:
+def removesuffix(self: str, suffix: str) -> str:
     if self.endswith(suffix):
         return self[:-len(suffix)]
     else:

@@ -224,14 +224,15 @@ def align_partitions(fasta_file: str,
                     if query_partition == lib_partition:
                         continue
                     else:
-                        q = f'partition_{query_partition}.fasta.tmp'
-                        l = f'partition_{lib_partition}.fasta.tmp'
+                        # out_path = f'partition_{idx}.fasta.tmp' if directory is None else f'{directory}/partition_{idx}.fasta.tmp'
+                        q = os.path.join(tmp_dir, f'partition_{query_partition}.fasta.tmp')
+                        l = os.path.join(tmp_dir, f'partition_{lib_partition}.fasta.tmp')
 
                         # chunk one of the files to max out threads.
                         # otherwise, can at max use (n_partitions x n_partitions) - n_partitions threads.
                         n_chunks = chunk_fasta_file(q, n_chunks=10, prefix=f'chunk_p_{query_partition}', directory=tmp_dir)
                         for i in range(n_chunks):
-                            q_c = f'chunk_p_{query_partition}_{i}.fasta.tmp'
+                            q_c = os.path.join(tmp_dir, f'chunk_p_{query_partition}_{i}.fasta.tmp')
                             future = executor.submit(compute_edges, q_c, l, results_dict, seq_lens, pbar, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)
                             jobs.append(future)
 

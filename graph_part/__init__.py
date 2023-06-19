@@ -1,4 +1,4 @@
-__version__ ="1.0"
+__version__ ="1.0.1"
 
 from .cli import main
 from .api import train_test_validation_split, stratified_k_fold

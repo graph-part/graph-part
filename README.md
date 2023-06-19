@@ -117,7 +117,7 @@ Long                    | Short | Description
 `--chunks`              |`-nc`  | The number of chunks into which to split the fasta file for multithreaded alignment. Defaults to 10.
 `--parallel-mode`       |`-pm`  | The Python parallelization strategy to use. `multithread` or `multiprocess`. Multiprocessing is potentially faster (especially for short sequences), but increases memory usage.
 `--nucleotide`          |`-nu`  | Use this flag if the input contains nucleotide sequences. By default, assumes proteins.
-`--triangular`          |`-tr`  | Only compute triangular of the full distance matrix. Twice as fast, but can yield slightly different results if an alignment has two different solutions with the same score, but different identities.
+`--triangular`          |`-tr`  | Only compute triangular of the full distance matrix. Twice as fast, but can yield slightly different results if an alignment has two different solutions with the same score, but different identities. In some cases, a pairwise identity can be slightly above the threshold in one solution, and slightly below in another (e.g A:B = 29.8%, B:A = 30.4%).
 `--gapopen`             |`-gapopen`     | [10.0 for any sequence] The gap open penalty is the score taken away when a gap is created. The best value depends on the choice of comparison matrix. The default value assumes you are using the EBLOSUM62 matrix. (Floating point number from 1.0 to 100.0)
 `--gapextend`           |`-gapextend`   | [0.5 for any sequence] The gap extension penalty is added to the standard gap penalty for each base or residue in the gap. This is how long gaps are penalized. Usually you will expect a few long gaps rather than many short gaps, so the gap extension penalty should be lower than the gap penalty. An exception is where one or both sequences are single reads with possible sequencing errors in which case you would expect many single base gaps. You can get this result by setting the gap open penalty to zero (or very low) and using the gap extension penalty to control gap scoring. (Floating point number from 0.0 to 10.0)
 `--endextend`           |`-endextend`   | [0.5 for any sequence] The end gap extension, penalty is added to the end gap penalty for each base or residue in the end gap. This is how long end gaps are penalized. (Floating point number from 0.0 to 10.0)
@@ -143,11 +143,20 @@ Long                    | Short | Description
 `--edge-file`           |`-ef`  | Path to a comma separated file containing precomputed pairwise metrics, the first two columns should contain sequence identifiers specified in the  `--fasta-file`. This is can be used to run GraphPart with an alignment tool different from the default `needleall` and `mmseqs`.
 `--metric-column`       |`-mc`  | Specifies in which column the metric is found. Indexing starts at 0, defaults to 2 when left unspecified.
 
+#### mmseqs2needle
+
+This mode combines `needle` and `mmseqs2`. After a first run of `mmseqs2`, all pairwise alignments with an indentity below `recompute-threshold` are computed using `needle`. Only then the partitioning is performed. Note that if `recompute-threshold` is very low, it can be faster to just run in `needle` mode. All arguments for the two modes are reused here, with the following exceptions:
+
+Long                    | Short | Description
+------------------------|-------|------------
+`--recompute-threshold` | `-re` | The threshold for MMseqs2 above which alignments should be recomputed using needleall. Has to be a number lower than `--threshold`.
+`--denominator-mmseqs`  | `-dnm`| Replaces `--denominator`. Applies to the mmseqs2 alignment step.
+`--denominator-needle`  | `-dnn`| Replaces `--denominator`. Applies to the needle alignment step.
 ## Citation
 
-GraphPart: Homology partitioning for biological sequence analysis
-Felix Teufel, Magnús Halldór Gíslason, José Juan Almagro Armenteros, Alexander Rosenberg Johansen, Ole Winther, Henrik Nielsen
-bioRxiv 2023.04.14.536886; doi: https://doi.org/10.1101/2023.04.14.536886
+    GraphPart: Homology partitioning for biological sequence analysis
+    Felix Teufel, Magnús Halldór Gíslason, José Juan Almagro Armenteros, Alexander Rosenberg Johansen, Ole Winther, Henrik Nielsen
+    bioRxiv 2023.04.14.536886; doi: https://doi.org/10.1101/2023.04.14.536886
 
 ## FAQ
 
@@ -156,4 +165,7 @@ bioRxiv 2023.04.14.536886; doi: https://doi.org/10.1101/2023.04.14.536886
 
 - **I want to test multiple thresholds and partitioning parameters - How can I do this efficiently ?**  
 When constructing the graph, we only retain identities that are larger than the selected `threshold`, as only those form relevant edges for partitioning the data. All other similarities are discarded as they are computed. To test multiple thresholds, the most efficient way is to first try the lowest threshold to be considered and save the edge list by specifying `--save-checkpoint-path EDGELIST.csv`. In the next run, use `graphpart precomputed -ef EDGELIST.csv` to start directly from the previous alignment result.
+
+- **GraphPart starts with nicely balanced partitions, but after homology removal the sizes are very imbalanced.**  
+By default, GraphPart tries to retain as many sequences as possible. In cases where the initialization clustering is far away from a valid solution (this happens when there are a lot of classes, with potentially small counts, and when there is high overall sequence similarity in the data), moving sequences between partitions will cause some partitions to grow large at the expense of others. You can try `--no-moving` to prevent this behaviour. 
 
