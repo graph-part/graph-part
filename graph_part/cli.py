@@ -201,7 +201,7 @@ def main():
     config['allow_moving'] = not args.no_moving
     config['removal_type'] = not args.remove_same
 
-    if config['matrix'] == 'EBLOSUM62' and config['nucleotide']:
+    if 'matrix' in config and config['matrix'] == 'EBLOSUM62' and config['nucleotide']:
         config['matrix'] = 'EDNAFULL'
 
     run_partitioning(config, write_output_file=True, write_json_report=True)
