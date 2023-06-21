@@ -6,6 +6,8 @@ import shutil
 from typing import List, Tuple, Dict
 import pathlib
 import numpy as np
+import time
+import json
 
 # not python 3.9 yet.
 def removesuffix(self: str, suffix: str) -> str:
@@ -143,8 +145,8 @@ def psicdhit_homology_cluster(entity_fp: str, threshold: float = 0.3) -> Tuple[L
 
     out_file = 'reduction_result.clstr'
    
-    subprocess.run(['cd-hit', '-i', entity_fp, '-o', 'pre_reduced_1' , '-c', '0.9', '-n', '5', '-T', '0', '-g', '1', '-d', '0' ])
-    subprocess.run(['cd-hit', '-i', 'pre_reduced_1', '-o', 'pre_reduced_2' , '-c', '0.6', '-n', '4', '-T', '0', '-g', '1', '-d', '0'])
+    subprocess.run(['cd-hit', '-i', entity_fp, '-o', 'pre_reduced_1' , '-c', '0.9', '-n', '5', '-T', '0', '-g', '1', '-d', '0', '-M', '10000' ])
+    subprocess.run(['cd-hit', '-i', 'pre_reduced_1', '-o', 'pre_reduced_2' , '-c', '0.6', '-n', '4', '-T', '0', '-g', '1', '-d', '0', '-M', '10000'])
 
     psi_path = pathlib.Path(__file__).parent.resolve() / 'psi_cd_hit.pl'
 
@@ -194,9 +196,9 @@ def cdhit_homology_cluster(entity_fp: str, threshold: float = 0.3, is_nucleotide
         word_size = '5'
 
     if is_nucleotide:
-        subprocess.run(['cd-hit-est', '-i', entity_fp, '-o', out_prefix , '-c', str(threshold), '-n', word_size, '-T', '0', '-d', '0', '-g', '1' ])
+        subprocess.run(['cd-hit-est', '-i', entity_fp, '-o', out_prefix , '-c', str(threshold), '-n', word_size, '-T', '0', '-d', '0', '-g', '1', '-M', '10000' ])
     else:
-        subprocess.run(['cd-hit', '-i', entity_fp, '-o', out_prefix , '-c', str(threshold), '-n', word_size, '-T', '0', '-d', '0', '-g', '1'])
+        subprocess.run(['cd-hit', '-i', entity_fp, '-o', out_prefix , '-c', str(threshold), '-n', word_size, '-T', '0', '-d', '0', '-g', '1', '-M', '10000'])
 
     representatives = []
     with open('reduction_result') as f:
@@ -230,7 +232,11 @@ def main() -> None:
 
     args = parser.parse_args()
 
+    out_dict = {}
+    out_dict['time_script_start'] = time.perf_counter()
+
     cluster_ids, acc_ids =  cdhit_homology_cluster(args.fasta_file, args.threshold, args.nucleotide)
+    out_dict['time_clustering_complete'] = time.perf_counter()
 
     labels_dict =  get_labels(args.fasta_file, args.labels_name)
 
@@ -250,6 +256,9 @@ def main() -> None:
 
         for idx, acc in enumerate(acc_ids):
             f.write(f'{acc},{labels[idx]},{cl_number[idx]}\n')
+
+    out_dict['time_script_complete'] = time.perf_counter()
+    json.dump(out_dict, open(os.path.splitext(args.out_file)[0]+'_report.json','w'))
 
 
 
