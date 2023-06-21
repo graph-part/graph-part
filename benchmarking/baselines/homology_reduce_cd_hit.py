@@ -6,7 +6,8 @@ import re
 import shutil
 from typing import List, Tuple
 import pathlib
-
+import json
+import time
 
 
 
@@ -14,8 +15,8 @@ def psicdhit_homology_reduce(entity_fp: str, threshold: float = 0.3)-> List[str]
 
     out_prefix = 'reduction_result'
    
-    subprocess.run(['cd-hit', '-i', entity_fp, '-o', 'pre_reduced_1' , '-c', '0.9', '-n', '5', '-T', '0', '-g', '1' ])
-    subprocess.run(['cd-hit', '-i', 'pre_reduced_1', '-o', 'pre_reduced_2' , '-c', '0.6', '-n', '4', '-T', '0', '-g', '1' ])
+    subprocess.run(['cd-hit', '-i', entity_fp, '-o', 'pre_reduced_1' , '-c', '0.9', '-n', '5', '-T', '0', '-g', '1', '-M', '10000' ])
+    subprocess.run(['cd-hit', '-i', 'pre_reduced_1', '-o', 'pre_reduced_2' , '-c', '0.6', '-n', '4', '-T', '0', '-g', '1',  '-M', '10000'])
 
     psi_path = pathlib.Path(__file__).parent.resolve() / 'psi_cd_hit.pl'
     subprocess.run(['perl', psi_path, '-i', 'pre_reduced_2', '-o', out_prefix, '-c', str(threshold)])
@@ -62,9 +63,9 @@ def cdhit_homology_reduce(entity_fp: str, threshold: float = 0.3, is_nucleotide:
         word_size = '5'
 
     if is_nucleotide:
-        subprocess.run(['cd-hit-est', '-i', entity_fp, '-o', out_prefix , '-c', str(threshold), '-n', word_size, '-T', '0' ])
+        subprocess.run(['cd-hit-est', '-i', entity_fp, '-o', out_prefix , '-c', str(threshold), '-n', word_size, '-T', '0', '-M', '10000' ])
     else:
-        subprocess.run(['cd-hit', '-i', entity_fp, '-o', out_prefix , '-c', str(threshold), '-n', word_size, '-T', '0' ])
+        subprocess.run(['cd-hit', '-i', entity_fp, '-o', out_prefix , '-c', str(threshold), '-n', word_size, '-T', '0', '-M', '10000' ])
 
     representatives = []
     with open('reduction_result') as f:
@@ -108,7 +109,11 @@ def main() -> None:
 
     args = parser.parse_args()
 
+    out_dict = {}
+    out_dict['time_script_start'] = time.perf_counter()
+
     representatives =  cdhit_homology_reduce(args.fasta_file, args.threshold, args.nucleotide)
+    out_dict['time_clustering_complete'] = time.perf_counter()
 
     labels =  get_labels(representatives, args.labels_name)
     accs =  [x.split('|')[0] for x in representatives]
@@ -123,6 +128,9 @@ def main() -> None:
             
             for idx in test_idx:
                 f.write(f'{accs[idx]},{labels[idx]},{i}\n')
+
+    out_dict['time_script_complete'] = time.perf_counter()
+    json.dump(out_dict, open(os.path.splitext(args.out_file)[0]+'_report.json','w'))
 
 
 

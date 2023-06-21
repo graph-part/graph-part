@@ -7,7 +7,8 @@ from typing import List, Tuple, Dict
 import pathlib
 import numpy as np
 from tqdm.auto import tqdm
-
+import time
+import json
 
 def partition_assignment(cluster_vector : np.array, kingdom_vector: np.array, label_vector: np.array, n_partitions: int, n_class: int, n_kingdoms: int) -> np.array:
     ''' Function to separate proteins into N partitions with balanced classes
@@ -127,8 +128,12 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    cluster_ids, identifiers =  mmseqs2_homology_cluster(args.fasta_file, args.threshold, args.cluster_mode, args.seq_id_mode)
+    out_dict = {}
+    out_dict['time_script_start'] = time.perf_counter()
 
+    cluster_ids, identifiers =  mmseqs2_homology_cluster(args.fasta_file, args.threshold, args.cluster_mode, args.seq_id_mode)
+    out_dict['time_clustering_complete'] = time.perf_counter()
+    
     labels =  get_labels(identifiers, args.labels_name)
     acc_ids = [x.split('|')[0] for x in identifiers]
 
@@ -146,6 +151,8 @@ def main() -> None:
         for idx, acc in enumerate(acc_ids):
             f.write(f'{acc},{labels[idx]},{cl_number[idx]}\n')
 
+    out_dict['time_script_complete'] = time.perf_counter()
+    json.dump(out_dict, open(os.path.splitext(args.out_file)[0]+'_report.json','w'))
 
 
 
