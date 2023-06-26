@@ -1,5 +1,14 @@
 # GraphPart
-Biological sequence dataset partitioning method
+
+[![PyPI version](https://badge.fury.io/py/graph-part.svg)](https://badge.fury.io/py/graph-part)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/graph-part)
+[![PyPIDownloadsTotal](https://pepy.tech/badge/graph-part)](https://pepy.tech/project/graph-part)
+[![Stars](https://img.shields.io/github/stars/graph-part/graph-part?logo=GitHub&color=yellow)](https://github.com/graph-part/graph-part/stargazers)
+
+
+
+**Biological sequence dataset partitioning method**
+
 
 Graph-Part is a Python package for generating partitions (i.e. train-test splits, or splits for cross-validation) of biological sequence datasets. It ensures minimal homology between different partitions, while balancing partitions for labels or other desired criteria.
 
@@ -169,3 +178,12 @@ When constructing the graph, we only retain identities that are larger than the 
 - **GraphPart starts with nicely balanced partitions, but after homology removal the sizes are very imbalanced.**  
 By default, GraphPart tries to retain as many sequences as possible. In cases where the initialization clustering is far away from a valid solution (this happens when there are a lot of classes, with potentially small counts, and when there is high overall sequence similarity in the data), moving sequences between partitions will cause some partitions to grow large at the expense of others. You can try `--no-moving` to prevent this behaviour. 
 
+
+- **I want to use a different similarity metric than sequence identity.**
+GraphPart can be used with any similarity or distance metric. To do so, you need to provide a list of precomputed pairwise similarities in the `precomputed` mode. The first two columns of the file should contain the sequence identifiers specified in the `--fasta-file`. The third column should contain the similarity metric. The `--metric-column` argument can be used to specify the column index. If you want to use a similarity metric, you need to specify a transformation using `--transformation`. See the [source](graph_part/transformations.py) for definitions. As an example, when operating with sequence identities ranging from 0 to 1, the transformation `one-minus` yields corresponding distances. If your metric is a distance, you can use `--transformation None` to skip the transformation step.
+
+- **I want to use a different alignment tool than EMBOSS needleall or MMseqs.**
+This is supported by the [precomputed](#precomputed) mode. Please refer to the answer above.
+
+- **How does the moving step decide to which partition to move a sequence to?**
+After initialization of the partitions, GraphPart iteratively moves sequences between partitions and removes sequences from the data to achieve homology separation. For each sequence, we compute how many connections it has to sequences in each other partition. If there are partitions with more connections than the current partition, the sequence is moved to the partition with the maximum number of connections. If there is a tie in the number of connections, the sequence is moved to the partition that appeared first when iterating the underlying graph data structure. We do not explicitly control this order.
