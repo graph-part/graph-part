@@ -15,7 +15,7 @@ gunzip raw/*
 
 
 
-Deprecated, just use Python script instead.
+Deprecated, just use `parse_pdb.py` Python script instead.
 ```
 pip install rna-tools
 # split chains and get one fasta for all
