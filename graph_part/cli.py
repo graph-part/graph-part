@@ -80,6 +80,7 @@ def get_args() -> argparse.Namespace:
     parser_precomputed =  subparsers.add_parser('precomputed', help='Use precomputed identities.', parents=[core_parser])
     parser_needle = subparsers.add_parser('needle', help='Use EMBOSS needle alignments.', parents=[core_parser])
     parser_mmseqs2 = subparsers.add_parser('mmseqs2', help='Use MMseqs2 alignments.', parents=[core_parser])
+    parser_mmseqs2needle = subparsers.add_parser('mmseqs2needle', help='Use MMseqs2 alignments and EMBOSS needle alignments.', parents=[core_parser])
 
     # 2. Arguments that are only required with precomputed metrics.
     parser_precomputed.add_argument("-ef","--edge-file",type=str, help='''Path to a comma separated file containing 
@@ -128,6 +129,41 @@ def get_args() -> argparse.Namespace:
                         choices=['shortest', 'longest', 'n_aligned'], 
                         default='shortest',
                         )
+    
+    # 5. Arguments that are only required with mmseqs2needle.
+    # this is pretty much needle and mmseqs2 combined.
+    parser_mmseqs2needle.add_argument("-dnn","--denominator-needle",type=str, help='Denominator to use for sequence identity computation.', 
+                        choices=['full', 'shortest', 'longest', 'mean', 'no_gaps'], 
+                        default='full',
+                        )
+    parser_mmseqs2needle.add_argument("-re","--recompute-threshold",type=float, help='Threshold under which to recompute alignments using needle.')
+    # Flags
+    parser_mmseqs2needle.add_argument("-nu","--nucleotide", action='store_true', help= 'Input contains nucleotide sequences (Default is proteins).')
+    parser_mmseqs2needle.add_argument("-tr","--triangular", action='store_true', help='Only compute triangular part of full distance matrix.')
+
+    # optimize runtime
+    parser_mmseqs2needle.add_argument("-nt","--threads",type=int, help='Number of threads to run in parallel.', default=1)
+    parser_mmseqs2needle.add_argument("-nc","--chunks",type=int, help='This has no effect in this mode.', default=10)
+    parser_mmseqs2needle.add_argument("-pm", "--parallel-mode", type=str, help='Parallelization strategy to use.',
+                                choices=['multithread', 'multiprocess'], 
+                                default='multithread'
+                                )
+    
+    # customize needle
+    parser_mmseqs2needle.add_argument('--gapopen','-gapopen', type=float, default=10, help='Passed to needle. See EMBOSS documentation.')
+    parser_mmseqs2needle.add_argument('--gapextend','-gapextend', type=float, default=0.5, help='Passed to needle. See EMBOSS documentation.')
+    parser_mmseqs2needle.add_argument('--endweight','-endweight', action='store_true', help='Passed to needle. See EMBOSS documentation.')
+    parser_mmseqs2needle.add_argument('--endopen','-endopen', type=float, default=10, help='Passed to needle. See EMBOSS documentation.')
+    parser_mmseqs2needle.add_argument('--endextend','-endextend', type=float, default=0.5, help='Passed to needle. See EMBOSS documentation.')
+    parser_mmseqs2needle.add_argument('--matrix', '--datafile','-datafile', type=str, default='EBLOSUM62', help='Passed to needle. See EMBOSS documentation.')
+
+
+    # mmseqs2.
+    parser_mmseqs2needle.add_argument("-pr","--prefilter", action='store_true', help= 'Use the mmseqs2 prefiltering procedure instead of forcing all-vs-all alignments.')
+    parser_mmseqs2needle.add_argument("-dnm","--denominator-mmseqs",type=str, help='Denominator to use for sequence identity computation.', 
+                        choices=['shortest', 'longest', 'n_aligned'], 
+                        default='shortest',
+                        )
 
     args =  parser.parse_args()
 
@@ -164,5 +200,8 @@ def main():
     config = vars(args)
     config['allow_moving'] = not args.no_moving
     config['removal_type'] = not args.remove_same
+
+    if 'matrix' in config and config['matrix'] == 'EBLOSUM62' and config['nucleotide']:
+        config['matrix'] = 'EDNAFULL'
 
     run_partitioning(config, write_output_file=True, write_json_report=True)

@@ -5,6 +5,8 @@ import os
 import re
 import shutil
 from typing import List, Tuple
+import time
+import json
 
 
 def mmseqs2_homology_reduce(entity_fp: str, threshold: float = 0.3, cluster_mode: int = 0, seq_id_mode: int = 0)-> List[str]:
@@ -61,7 +63,11 @@ def main() -> None:
 
     args = parser.parse_args()
 
+    out_dict = {}
+    out_dict['time_script_start'] = time.perf_counter()
+
     representatives =  mmseqs2_homology_reduce(args.fasta_file, args.threshold, args.cluster_mode, args.seq_id_mode)
+    out_dict['time_clustering_complete'] = time.perf_counter()
 
     labels =  get_labels(representatives, args.labels_name)
     accs =  [x.split('|')[0] for x in representatives]
@@ -76,6 +82,9 @@ def main() -> None:
             
             for idx in test_idx:
                 f.write(f'{accs[idx]},{labels[idx]},{i}\n')
+
+    out_dict['time_script_complete'] = time.perf_counter()
+    json.dump(out_dict, open(os.path.splitext(args.out_file)[0]+'_report.json','w'))
 
 
 

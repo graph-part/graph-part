@@ -84,6 +84,7 @@ def stratified_k_fold(sequences: Union[List[str], np.ndarray, Dict[str,str]],
                      save_checkpoint_path: str = None,
                      denominator: str = 'full',
                      nucleotide: bool = False,
+                     prefilter: bool = False,
                      triangular: bool = False,
                      threads: int = 4,
                      chunks: int = 10,
@@ -150,6 +151,7 @@ def stratified_k_fold(sequences: Union[List[str], np.ndarray, Dict[str,str]],
         "save_checkpoint_path": save_checkpoint_path,
         "denominator": denominator,
         "nucleotide": nucleotide,
+        "prefilter": prefilter,
         "triangular": triangular,
         "threads": threads,
         "chunks": chunks,
@@ -172,6 +174,14 @@ def stratified_k_fold(sequences: Union[List[str], np.ndarray, Dict[str,str]],
 
     # 4. Make output lists.
     partition_assignment_df = partition_assignment_df.reset_index()
+
+    # 'AC' will be type string. But potentially the original 'AC' were ints.
+    if type(next(sequences.keys())) == int:
+        try:
+            partition_assignment_df['AC'] = partition_assignment_df['AC'].astype(int)
+        except:
+            pass
+
     outs = []
     # iterate over all created folds and add to the output list.
     for _, sub_df in partition_assignment_df.groupby('cluster'):
@@ -305,6 +315,14 @@ def train_test_validation_split(sequences: Union[List[str], np.ndarray, Dict[str
 
     # 4. Make output lists.
     partition_assignment_df = partition_assignment_df.reset_index()
+
+    # 'AC' will be type string. But potentially the original 'AC' were ints.
+    if type(next(sequences.keys())) == int:
+        try:
+            partition_assignment_df['AC'] = partition_assignment_df['AC'].astype(int)
+        except:
+            pass
+
     outs = []
     # iterate over all created folds and add to the output list.
     for _, sub_df in partition_assignment_df.groupby('cluster'):

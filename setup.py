@@ -17,11 +17,11 @@ requirements = [
 
 setup(
     name="graph-part",
-    version='0.1.2',
+    version='1.0.1',
     description="Graph-based partitioning of biological sequence data",
     long_description=readme,
     long_description_content_type="text/markdown",
-    url="https://healthtech.dtu.dk",
+    url="https://github.com/graph-part/graph-part",
     author="F. Teufel and M.H. Gislason",
     packages=['graph_part'],
     python_requires=">=3.6, <4",

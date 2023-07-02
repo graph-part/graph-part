@@ -1,5 +1,5 @@
 '''
-Compute maximum identity to other partitions for each sequence
+Compute identity to own partition for each sequence
 in a partitioning using needleall.
 '''
 import argparse
@@ -96,7 +96,7 @@ def chunk_fasta_file(fasta_file: str, n_chunks: int, prefix: str = 'chunk', sep:
 
 def compute_edges(query_fp: str,
                   library_fp: str,
-                  results_dict: Dict[str, Tuple[float, str]], 
+                  results_dict: Dict[Tuple[str, str], Tuple[float, str]], 
                   seq_lens: Dict[str,int],
                   pbar: tqdm,
                   denominator = 'full',
@@ -173,11 +173,16 @@ def compute_edges(query_fp: str,
                 #line = "# Identity:      14/443 ( 3.2%)"
                 # n_matches =  int(line[11:].split('/')[0]) #int() does not mind leading spaces
 
-                if this_qry not in results_dict:
-                    results_dict[this_qry] = (identity, this_lib)
-                else:
-                    if results_dict[this_qry][0]<identity:
-                        results_dict[this_qry] = (identity, this_lib)
+                if this_qry == this_lib:
+                    # no self alignments.
+                    continue
+
+                results_dict[tuple(sorted([this_qry, this_lib]))] = identity
+                # if this_qry not in results_dict:
+                #     results_dict[this_qry] = (identity, this_lib)
+                # else:
+                #     if results_dict[this_qry][0]<identity:
+                #         results_dict[this_qry] = (identity, this_lib)
                 
 
 
@@ -209,32 +214,28 @@ def align_partitions(fasta_file: str,
         print('Writing temporary fasta files...')
         n_partitions, seq_lens = partition_fasta_file(fasta_file, partition_file, directory=tmp_dir)
 
-        results_dict = {} # Acc: [max_id, Acc]
+        results_dict = {} # (Acc1, Acc2): id
 
         part_size = len(seq_lens) // n_partitions
         print('Aligning all partitions...')
         # this is still wrong, we would need to count the actual number of seqs in each partition
         # like that its just an upper bound.
-        pbar = tqdm(total=part_size*part_size*(n_partitions*n_partitions - n_partitions)) #inner complexity x nested for loops.
+        pbar = tqdm(total=part_size*part_size*(n_partitions)) #inner complexity x nested for loops.
         jobs = []
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=n_procs) as executor:
-            for query_partition in range(n_partitions):
-                for lib_partition in range(n_partitions):
-                    if query_partition == lib_partition:
-                        continue
-                    else:
-                        # out_path = f'partition_{idx}.fasta.tmp' if directory is None else f'{directory}/partition_{idx}.fasta.tmp'
-                        q = os.path.join(tmp_dir, f'partition_{query_partition}.fasta.tmp')
-                        l = os.path.join(tmp_dir, f'partition_{lib_partition}.fasta.tmp')
+            for partition in range(n_partitions):
+                
+                # out_path = f'partition_{idx}.fasta.tmp' if directory is None else f'{directory}/partition_{idx}.fasta.tmp'
+                p = os.path.join(tmp_dir, f'partition_{partition}.fasta.tmp')
 
-                        # chunk one of the files to max out threads.
-                        # otherwise, can at max use (n_partitions x n_partitions) - n_partitions threads.
-                        n_chunks = chunk_fasta_file(q, n_chunks=10, prefix=f'chunk_p_{query_partition}', directory=tmp_dir)
-                        for i in range(n_chunks):
-                            q_c = os.path.join(tmp_dir, f'chunk_p_{query_partition}_{i}.fasta.tmp')
-                            future = executor.submit(compute_edges, q_c, l, results_dict, seq_lens, pbar, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)
-                            jobs.append(future)
+                # chunk one of the files to max out threads.
+                # otherwise, can at max use (n_partitions x n_partitions) - n_partitions threads.
+                n_chunks = chunk_fasta_file(p, n_chunks=10, prefix=f'chunk_p_{partition}', directory=tmp_dir)
+                for i in range(n_chunks):
+                    q_c = os.path.join(tmp_dir, f'chunk_p_{partition}_{i}.fasta.tmp')
+                    future = executor.submit(compute_edges, q_c, p, results_dict, seq_lens, pbar, denominator, delimiter, is_nucleotide, gapopen, gapextend, endweight, endopen, endextend, matrix)
+                    jobs.append(future)
 
 
         # for x in os.listdir():
@@ -265,7 +266,7 @@ def main() -> None:
     parser.add_argument('--threads', type=int, default=8)
     args = parser.parse_args()
 
-    max_identities = align_partitions(args.fasta_file, 
+    results_dict = align_partitions(args.fasta_file, 
                                       args.partition_file, 
                                       args.denominator, 
                                       '|', 
@@ -279,18 +280,19 @@ def main() -> None:
                                       args.threads)
 
 
-    df_partitions = pd.read_csv(args.partition_file)
-    df_partitions['max_ident_other'] = None
-    df_partitions['closest_other'] = None
+    # df_partitions = pd.read_csv(args.partition_file)
+    # df_partitions['max_ident_other'] = None
+    # df_partitions['closest_other'] = None
 
-    for idx, row in df_partitions.iterrows():
+    # for idx, row in df_partitions.iterrows():
 
-        max_ident, closest = max_identities[row['AC']]
-        df_partitions.loc[idx, 'max_ident_other'] = max_ident
-        df_partitions.loc[idx, 'closest_other'] = closest
+    #     max_ident, closest = max_identities[row['AC']]
+    #     df_partitions.loc[idx, 'max_ident_other'] = max_ident
+    #     df_partitions.loc[idx, 'closest_other'] = closest
 
-    
-    df_partitions.to_csv(args.out_file)
+
+    df = pd.DataFrame.from_dict(results_dict, orient='index')
+    df.to_csv(args.out_file)
 
 if __name__ == '__main__':
     main()
