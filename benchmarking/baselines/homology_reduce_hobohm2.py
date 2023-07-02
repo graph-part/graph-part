@@ -40,7 +40,8 @@ def hobohm_homology_reduce(entity_fp: str, threshold: float = 0.3, is_nucleotide
     config = {
         "alignment_mode": alignment_mode,
         "fasta_file": entity_fp,
-        "threshold": one_minus(0),
+        "threshold": threshold,
+        "threshold_transformed": one_minus(threshold),
         "transformation": 'one-minus',
         "priority_name": None,
         "labels_name": None,
@@ -56,7 +57,7 @@ def hobohm_homology_reduce(entity_fp: str, threshold: float = 0.3, is_nucleotide
         "endweight": False,
         "endopen": 10.0,
         "endextend": 0.5,
-        "matrix": 'EBLOSUM62',
+        "matrix": 'EDNAFULL' if is_nucleotide else 'EBLOSUM62',
 
         # these are not used, but are required by the graph_part code.
         'partitions': 5,
@@ -67,15 +68,22 @@ def hobohm_homology_reduce(entity_fp: str, threshold: float = 0.3, is_nucleotide
     if json_dict is None:
         json_dict = {}
 
-    # get edge list
-    full_graph, part_graph, labels = make_graphs_from_sequences(config, 1, json_dict, True)
+    # get edge list -  this function expects the threshold to be in distance (after transformation)
+    full_graph, part_graph, labels = make_graphs_from_sequences(config, one_minus(threshold), json_dict, True)
+    json_dict['time_edges_complete'] = time.perf_counter()
 
     neighborlist = {}
 
+
+
     #debugging
+    # mmseqs align temp/seq_db temp/seq_db temp/pref temp/align_db --alignment-mode 3 -e inf --seq-id-mode 1 --min-seq-id 0.8
     # # make an edge dataframe
     # import pandas as pd
     # edge_df = pd.DataFrame(full_graph.edges(data=True), columns=['seq1', 'seq2', 'metric'])
+    # edge_df['metric'] = edge_df['metric'].apply(lambda x: x['metric'])
+    # edge_df['identity'] = 1- edge_df['metric']
+    # import ipdb; ipdb.set_trace()
 
     # Each line in file has format: seqid_1,seqid_2,similarity
     for seq1, seq2, data in tqdm(full_graph.edges(data=True)):
@@ -93,6 +101,12 @@ def hobohm_homology_reduce(entity_fp: str, threshold: float = 0.3, is_nucleotide
         if similarity > threshold:
             neighborlist[seq1].add(seq2)
             neighborlist[seq2].add(seq1)
+    
+    # NOTE because we iterate the edges, nodes that have no edges (singletons) will not be in the neighborlist.
+    # so we add them now manually.
+    for node in full_graph.nodes():
+        if node not in neighborlist:
+            neighborlist[node] = set()
 
     ########################################################################################
 
@@ -171,7 +185,7 @@ def main() -> None:
     out_dict = {}
     out_dict['time_script_start'] = time.perf_counter()
 
-    representatives =  hobohm_homology_reduce(args.fasta_file, args.threshold, args.nucleotide, args.threads, args.alignment_mode, out_dict)
+    representatives =  hobohm_homology_reduce(args.fasta_file, args.threshold, args.nucleotide, args.threads, args.alignment_mode, json_dict=out_dict)
     out_dict['time_clustering_complete'] = time.perf_counter()
 
     labels =  get_labels(representatives, args.labels_name)
