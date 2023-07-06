@@ -93,9 +93,10 @@ graphpart ALIGNMENT_MODE -ff FASTAFILE.fasta -th 0.3
 
 Alignment mode  | Description
 ----------------|----------------------
-`needle`        | Use EMBOSS needleall to compute exact pairwise global Needleman-Wunsch identities for all sequences.
-`mmseqs2`       | Use MMseqs2 to compute fast identities from local alignments. Use with caution for nucleotides, as there it cannot be guaranteed that MMseqs2 computes all pairwise alignments.
-`precomputed`   | Use a list of precomputed identities or other similarity/distance metrics.
+[`needle`](#needle)        | Use EMBOSS needleall to compute exact pairwise global Needleman-Wunsch (NW) identities for all sequences.
+[`mmseqs2`](#mmseqs2)       | Use MMseqs2 to compute fast identities from local alignments. Use with caution for nucleotides, as there it cannot be guaranteed that MMseqs2 computes all pairwise alignments.
+[`precomputed`](#precomputed)   | Use a list of precomputed identities or other similarity/distance metrics.
+[`mmseqs2needle`](#mmseqs2needle) | Uses MMseqs2 to compute fast identities, followed by recomputation of NW identities of all identities between the separation threshold and an user-defined lower threshold.
 
 ### Arguments
 
@@ -124,11 +125,11 @@ Long                    | Short | Description
 `--denominator`         |`-dn`  | Denominator to use for percent sequence identity computation. The number of perfect matching positions is divided by the result of this operation. Can be any of `shortest`, `longest`, `mean`, `full`, `no_gaps`. The first three options are computed from the original lengths of the aligned sequences. `full` refers to the full length of the alignment, including gaps, and is the default. `no_gaps` subtracts gaps from the full alignment length.
 `--threads`             |`-nt`  | The number of threads to run in parallel. If `-1`, will use all available resources. Defaults to 1.
 `--chunks`              |`-nc`  | The number of chunks into which to split the fasta file for multithreaded alignment. Defaults to 10.
-`--parallel-mode`       |`-pm`  | The Python parallelization strategy to use. `multithread` or `multiprocess`. Multiprocessing is potentially faster (especially for short sequences), but increases memory usage.
+`--parallel-mode`       |`-pm`  | The Python parallelization strategy to use. `multithread` or `multiprocess`. Multiprocessing is potentially faster (especially for short sequences), but increases memory usage. Defaults to `multithread`
 `--nucleotide`          |`-nu`  | Use this flag if the input contains nucleotide sequences. By default, assumes proteins.
 `--triangular`          |`-tr`  | Only compute triangular of the full distance matrix. Twice as fast, but can yield slightly different results if an alignment has two different solutions with the same score, but different identities. In some cases, a pairwise identity can be slightly above the threshold in one solution, and slightly below in another (e.g A:B = 29.8%, B:A = 30.4%).
 `--gapopen`             |`-gapopen`     | [10.0 for any sequence] The gap open penalty is the score taken away when a gap is created. The best value depends on the choice of comparison matrix. The default value assumes you are using the EBLOSUM62 matrix. (Floating point number from 1.0 to 100.0)
-`--gapextend`           |`-gapextend`   | [0.5 for any sequence] The gap extension penalty is added to the standard gap penalty for each base or residue in the gap. This is how long gaps are penalized. Usually you will expect a few long gaps rather than many short gaps, so the gap extension penalty should be lower than the gap penalty. An exception is where one or both sequences are single reads with possible sequencing errors in which case you would expect many single base gaps. You can get this result by setting the gap open penalty to zero (or very low) and using the gap extension penalty to control gap scoring. (Floating point number from 0.0 to 10.0)
+`--gapextend`           |`-gapextend`   | [0.5 for any sequence] The gap extension penalty is added to the standard gap penalty for each base or residue in the gap. This is how long gaps are penalized. Usually you will expect a few long gaps rather than many short gaps, so the gap extension penalty should be lower than the gap penalty. An exception is where one or both sequences are single reads with possible sequencing errors in which case you would expect many single base gaps. You can get this result by setting the gap open penalty to a very low value and using the gap extension penalty to control gap scoring. (Floating point number from 0.0 to 10.0)
 `--endextend`           |`-endextend`   | [0.5 for any sequence] The end gap extension, penalty is added to the end gap penalty for each base or residue in the end gap. This is how long end gaps are penalized. (Floating point number from 0.0 to 10.0)
 `--endweight`           |`-endweight`   | Flag. Apply end gap penalties.
 `--endopen`             |`-endopen`     | [10.0 for any sequence] The end gap open penalty is the score taken away when an end gap is created. The best value depends on the choice of comparison matrix. The default value assumes you are using the EBLOSUM62 matrix for protein sequences. (Floating point number from 1.0 to 100.0)
