@@ -294,14 +294,13 @@ def partition_data(full_graph: nx.classes.graph.Graph,
         nx.set_node_attributes(part_graph,{acs[ind]:attr})
 
 
-def remover(full_graph: nx.classes.graph.Graph, 
-            part_graph: nx.classes.graph.Graph, 
-            threshold:float, 
-            json_dict: Dict[str, Any],
-            move_to_most_neighbourly:bool = True, 
-            ignore_priority:bool = True,
-            simplistic_removal:bool = True,
-            verbose: bool = True):
+def remover( full_graph: nx.classes.graph.Graph, 
+             part_graph: nx.classes.graph.Graph, 
+             threshold:float, 
+             json_dict: Dict[str, Any],
+             move_to_most_neighbourly:bool = True, 
+             ignore_priority:bool = True,
+             verbose: bool = True ):
 
     if ignore_priority:
         json_dict['removal_step_1'] = {}
@@ -321,7 +320,6 @@ def remover(full_graph: nx.classes.graph.Graph,
             neighbours = nx.neighbors(full_graph,n)
             neighbour_clusters = Counter((part_graph.nodes[nb]['cluster'] for nb in nx.neighbors(full_graph,n) if full_graph[n][nb]['metric'] < threshold))
             cluster = part_graph.nodes[n]['cluster']
-            nb_sc_wth = []
             nb_oc_wth = []
             
             ## FIRST MOVE NODE TO CLUSTER WITH MOST NEIGHBOURS
@@ -565,11 +563,11 @@ def partition_and_remove(full_graph: nx.classes.graph.Graph, part_graph: nx.clas
     if removal_needed(part_graph, full_graph, threshold):     
         print('Need to remove! Currently have this many samples:', full_graph.number_of_nodes())
 
-        remover(full_graph, part_graph, threshold, json_dict, config['allow_moving'], True, config['removal_type'], verbose=verbose)    
+        remover(full_graph, part_graph, threshold, json_dict, config['allow_moving'], True, verbose=verbose)    
 
     if removal_needed(part_graph, full_graph, threshold):   
         print('Need to remove priority! Currently have this many samples:', full_graph.number_of_nodes())
-        remover(full_graph, part_graph, threshold, json_dict, config['allow_moving'], False, config['removal_type'], verbose=verbose)    
+        remover(full_graph, part_graph, threshold, json_dict, config['allow_moving'], False, verbose=verbose)    
 
     print('After removal we have this many samples:', full_graph.number_of_nodes())
 
