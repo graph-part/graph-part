@@ -46,6 +46,7 @@ python graph_part.py
     -ln positive 
     -of gpia_gps_part_identity2.csv
 Author(s): Magnús Halldór Gíslason.
+           Felix Teufel
            Developed in close collaboration with 
            José Juan Almagro Armenteros and Henrik Nielsen.
 For bug reporting contact mhgislason@gmail.com
