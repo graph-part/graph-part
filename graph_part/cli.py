@@ -192,7 +192,7 @@ def main():
     args = get_args()
     config = vars(args)
     config['allow_moving'] = not args.no_moving
-    config['removal_type'] = not args.remove_same
+    config['removal_type'] = True
 
     if 'matrix' in config and config['matrix'] == 'EBLOSUM62' and config['nucleotide']:
         config['matrix'] = 'EDNAFULL'
