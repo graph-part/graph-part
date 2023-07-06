@@ -14,7 +14,6 @@ from tqdm import tqdm
 from .transformations import TRANSFORMATIONS
 from .train_val_test_split import train_val_test_split
 
-#TODO update new arg names here
 """
 This program partitions an entity set according to a single pairwise distance metric
 and some desired threshold the partitions should fullfill.
@@ -33,36 +32,11 @@ For example:
 the priority name and label name should be designated using the appropriate parameters.
 In this case you would specify the priority name -pn experimental and the label name 
 -ln class
-For the full list of parameters, run graph_part.py --help
-Example usage:
-python graph_part.py 
-    -ff ../../data/sequences/raw_data.fasta 
-    -ef ../../data/edgefiles/ggs_default_gpia2_edges 
-    -mc 2
-    -th 0.31 
-    -pa 5 
-    -tf one-minus 
-    -pn experimental
-    -ln positive 
-    -of gpia_gps_part_identity2.csv
+    
 Author(s): Magnús Halldór Gíslason.
            Felix Teufel
            Developed in close collaboration with 
            José Juan Almagro Armenteros and Henrik Nielsen.
-For bug reporting contact mhgislason@gmail.com
-(CC BY-NC 4.0) 
-You are free to:
-Share — copy and redistribute the material in any medium or format
-Adapt — remix, transform, and build upon the material
-Under the following terms:
-Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made. 
-You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
-NonCommercial — You may not use the material for commercial purposes.
-No additional restrictions — You may not apply legal terms or technological measures that legally restrict others 
-from doing anything the license permits.
-see:
-https://creativecommons.org/licenses/by-nc/4.0/
-https://creativecommons.org/licenses/by-nc/4.0/legalcode
 """
 
 
