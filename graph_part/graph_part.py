@@ -338,19 +338,11 @@ def remover(full_graph: nx.classes.graph.Graph,
 
             for neighbour in neighbours:
                 nb_cluster = part_graph.nodes[neighbour]['cluster']
-                if nb_cluster == cluster and full_graph[n][neighbour]['metric'] < threshold and not simplistic_removal:
-                    ## The more complex removal criterion. This was worse for GPI anchors. Haven't checked for Subnuclear
-                    nb_sc_wth.append(full_graph[n][neighbour]['metric'])
-                elif nb_cluster != cluster and full_graph[n][neighbour]['metric'] < threshold:
+                if nb_cluster != cluster and full_graph[n][neighbour]['metric'] < threshold:
                     min_oc_wth = min(min_oc_wth, full_graph[n][neighbour]['metric'])
                     nb_oc_wth.append(full_graph[n][neighbour]['metric'])
 
-            ## The more complex additional connectivity criterion, will be empty with simple_removal == True        
-            distances = [x for x in (sum(x_) for x_ in product(nb_sc_wth, nb_oc_wth)) if x >= threshold] 
-            
-            distances += nb_oc_wth
-
-            between_connectivity[n] = len(distances)
+            between_connectivity[n] = len(nb_oc_wth)
             
         nx.set_node_attributes(full_graph, between_connectivity, 'between_connectivity')
         bc_sum = np.sum(np.fromiter((d['between_connectivity'] for n,d in full_graph.nodes(data=True)),int))
