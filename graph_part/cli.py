@@ -56,13 +56,6 @@ def get_args() -> argparse.Namespace:
                                                                             entities if it finds more within threshold 
                                                                             neighbours in another partition.'''
                         )
-    core_parser.add_argument("-rs","--remove-same",action='store_true', help='''Activate if you also want to remove
-                                      based on the within threshold interconnectivity
-                                      between within threshold neighbours in other
-                                      partitions and within threshold neighbours 
-                                      in the same partition. The default removes based on the number
-                                      of within threshold neighbours in other partitions.'''
-                        )
     
     # train-val-test splits.
     core_parser.add_argument("-te","--test-ratio",type=float, default=0.0, help='The fraction of the data to use for testing. Incompatible with `partitions`.')
@@ -199,7 +192,6 @@ def main():
     args = get_args()
     config = vars(args)
     config['allow_moving'] = not args.no_moving
-    config['removal_type'] = not args.remove_same
 
     if 'matrix' in config and config['matrix'] == 'EBLOSUM62' and config['nucleotide']:
         config['matrix'] = 'EDNAFULL'
