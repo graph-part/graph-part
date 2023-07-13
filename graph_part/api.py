@@ -176,7 +176,7 @@ def stratified_k_fold(sequences: Union[List[str], np.ndarray, Dict[str,str]],
     partition_assignment_df = partition_assignment_df.reset_index()
 
     # 'AC' will be type string. But potentially the original 'AC' were ints.
-    if type(next(sequences.keys())) == int:
+    if type(list(sequences.keys())[0]) == int:
         try:
             partition_assignment_df['AC'] = partition_assignment_df['AC'].astype(int)
         except:
@@ -317,7 +317,7 @@ def train_test_validation_split(sequences: Union[List[str], np.ndarray, Dict[str
     partition_assignment_df = partition_assignment_df.reset_index()
 
     # 'AC' will be type string. But potentially the original 'AC' were ints.
-    if type(next(sequences.keys())) == int:
+    if type(list(sequences.keys())[0]) == int:
         try:
             partition_assignment_df['AC'] = partition_assignment_df['AC'].astype(int)
         except:
