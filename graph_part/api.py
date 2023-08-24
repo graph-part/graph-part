@@ -168,6 +168,9 @@ def stratified_k_fold(sequences: Union[List[str], np.ndarray, Dict[str,str]],
         "removal_type": not remove_same,
     }
 
+    if 'matrix' in config and config['matrix'] == 'EBLOSUM62' and config['nucleotide']:
+        config['matrix'] = 'EDNAFULL'
+
     # 3. Partition
     partition_assignment_df = run_partitioning(config, write_output_file=False, write_json_report=False, verbose=False)
     os.remove(config['fasta_file'])
@@ -308,6 +311,9 @@ def train_test_validation_split(sequences: Union[List[str], np.ndarray, Dict[str
         "allow_moving": not no_moving, # silly conversions because in the CLI we want to have those default-false.
         "removal_type": not remove_same,
     }
+
+    if 'matrix' in config and config['matrix'] == 'EBLOSUM62' and config['nucleotide']:
+        config['matrix'] = 'EDNAFULL'
 
     # 3. Partition
     partition_assignment_df = run_partitioning(config, write_output_file=False, write_json_report=False, verbose=False)
