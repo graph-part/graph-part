@@ -78,4 +78,4 @@ def generate_edges_mmseqs(entity_fp: str,
             else:
                 full_graph.add_edge(this_qry, this_lib, metric=metric)  
 
-    shutil.rmtree('temp')
+    shutil.rmtree('temp', ignore_errors=True)
